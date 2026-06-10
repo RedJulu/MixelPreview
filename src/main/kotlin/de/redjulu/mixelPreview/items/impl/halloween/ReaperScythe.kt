@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.checkerframework.checker.units.qual.mm
+import kotlin.random.Random
 
 object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN) {
     override val displayName: String
@@ -24,6 +25,13 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
     val soulsKey = NamespacedKey(MixelPreview.instance, "reaper_scythe_souls")
 
     private const val maxSouls = 10
+
+
+    val lootpool = mapOf<Any, Double>(
+        ShrinkStaff.id to 15.0,
+        Material.DIAMOND to 25.0,
+        Material.GOLD_INGOT to 60.0
+    )
 
     override fun createItem(): ItemStack = tag(
         ItemBuilder(Material.NETHERITE_HOE)
@@ -61,9 +69,29 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
 
         val souls = item.persistentDataContainer.get(soulsKey, PersistentDataType.INTEGER) ?: 0
         if ((souls + 1) >= maxSouls) {
-            val leftover = SpecialItemKeys.getItem(ShrinkStaff.id)?.let { player.inventory.addItem(it) }
-            leftover?.forEach { (_, stack) ->
-                player.world.dropItemNaturally(player.location, stack)
+
+            val totalWeight = lootpool.values.sum()
+            var randomValue = Random.nextDouble() * totalWeight
+
+            var selectedReward: ItemStack? = null
+            for ((reward, weight) in lootpool) {
+                randomValue -= weight
+                if (randomValue <= 0) {
+                    selectedReward = when (reward) {
+                        is String -> SpecialItemKeys.getItem(reward)
+                        is Material -> ItemStack(reward)
+                        else -> null
+                    }
+                    break
+                }
+            }
+
+
+            selectedReward?.let { rewardStack ->
+                val leftover = player.inventory.addItem(rewardStack)
+                leftover.forEach { (_, stack) ->
+                    player.world.dropItemNaturally(player.location, stack)
+                }
             }
         }
         player.setItemInHand(update(item))
