@@ -1,0 +1,18 @@
+name: MixelPreview
+version: '${version}'
+
+main: de.redjulu.mixelPreview.MixelPreview
+bootstrapper: de.redjulu.mixelPreview.MixelPreviewBootstrap
+api-version: '1.21.8'
+
+author: RedJulu
+
+dependencies:
+  server:
+    ProtocolLib:
+      load: BEFORE
+      required: true
+    FastAsyncWorldEdit:
+      load: BEFORE
+      required: true
+      join-classpath: true
