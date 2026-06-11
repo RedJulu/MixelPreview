@@ -22,6 +22,7 @@ import org.bukkit.event.player.PlayerShearEntityEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
+import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
@@ -61,6 +62,11 @@ abstract class SpecialItem(
     open fun onToggleSneak(event: PlayerToggleSneakEvent) {}
     open fun onToggleSprint(event: PlayerToggleSprintEvent) {}
     open fun onKillEntity(event: EntityDeathEvent) {}
+
+
+    open fun onEnterWater(player: Player) {}
+    open fun onLeaveWater(player: Player) {}
+    open fun onSubmerge(player: Player) {}
 
     fun build(): ItemStack = createItem()
 

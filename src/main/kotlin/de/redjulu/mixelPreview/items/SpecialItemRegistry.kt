@@ -6,6 +6,7 @@ import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe
 import de.redjulu.mixelPreview.items.impl.misc.FindTheItem
 import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
 import de.redjulu.mixelPreview.items.impl.summer.CoralSplitter
+import de.redjulu.mixelPreview.items.impl.summer.PoseidonPickaxe
 
 object SpecialItemRegistry {
 
@@ -30,5 +31,6 @@ object SpecialItemRegistry {
         register(CoralSplitter)
         register(CreativeAxe)
         register(ReaperScythe)
+        register(PoseidonPickaxe)
     }
 }
