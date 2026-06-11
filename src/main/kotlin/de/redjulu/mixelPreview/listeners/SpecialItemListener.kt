@@ -3,6 +3,8 @@ package de.redjulu.mixelPreview.listeners
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.items.SpecialItemRegistry
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes.player
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -29,6 +31,8 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scheduler.BukkitRunnable
 
 class SpecialItemListener : Listener {
 
@@ -40,6 +44,16 @@ class SpecialItemListener : Listener {
     private fun dispatchHands(player: Player, handler: (SpecialItem) -> Unit) {
         dispatch(player.inventory.itemInMainHand, handler)
         dispatch(player.inventory.itemInOffHand, handler)
+    }
+
+    fun startTickTask(plugin: JavaPlugin) {
+        object : BukkitRunnable() {
+            override fun run() {
+                Bukkit.getOnlinePlayers().forEach { player ->
+                    dispatchHands(player) { it.onTick(player) }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1L)
     }
 
     @EventHandler

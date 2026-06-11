@@ -23,8 +23,11 @@ class MixelPreview : JavaPlugin() {
 
         SpecialItemRegistry.init()
 
+        val specialItemListener = SpecialItemListener()
+        specialItemListener.startTickTask(this)
+
         server.pluginManager.registerEvents(GUIListener(), this)
-        server.pluginManager.registerEvents(SpecialItemListener(), this)
+        server.pluginManager.registerEvents(specialItemListener, this)
         server.pluginManager.registerEvents(CreativeAxeListener(), this)
     }
 

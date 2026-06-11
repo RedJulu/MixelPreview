@@ -64,9 +64,7 @@ abstract class SpecialItem(
     open fun onKillEntity(event: EntityDeathEvent) {}
 
 
-    open fun onEnterWater(player: Player) {}
-    open fun onLeaveWater(player: Player) {}
-    open fun onSubmerge(player: Player) {}
+    open fun onTick(player: Player) {}
 
     fun build(): ItemStack = createItem()
 

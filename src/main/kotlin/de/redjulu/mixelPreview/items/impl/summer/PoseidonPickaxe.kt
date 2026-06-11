@@ -6,6 +6,8 @@ import de.redjulu.mixelPreview.utils.ItemBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
 
 object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUMMER) {
@@ -16,6 +18,7 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
 
     override fun createItem(): ItemStack = tag(
         ItemBuilder(Material.NETHERITE_PICKAXE)
+            .setName(displayName)
             .setMiniMessageLore(
                 "",
                 " <gradient:#BEFF00:#BEFF00>Ma<gradient:#BEFF00:#00FFEA>che dir Poseidons Kraf<gradient:#00FFEA:#00FFEA>t zu eigen!",
@@ -27,8 +30,9 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
             )
     ).build()
 
-    override fun onSubmerge(player: Player) {
+    override fun onTick(player: Player) {
+        if (!player.isUnderWater) return
 
-
+        player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 1))
     }
 }
