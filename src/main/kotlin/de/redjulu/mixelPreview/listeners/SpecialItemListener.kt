@@ -54,7 +54,7 @@ class SpecialItemListener : Listener {
             override fun run() {
                 Bukkit.getOnlinePlayers().forEach { player ->
                     val wasInWater = inWater.contains(player.uniqueId)
-                    val nowInWater = player.isInWater
+                    val nowInWater = player.isUnderWater
 
                     if (!wasInWater && nowInWater) {
                         inWater.add(player.uniqueId)

@@ -3,6 +3,7 @@ package de.redjulu.mixelPreview.items.impl.summer
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.utils.ItemBuilder
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -14,7 +15,7 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
     override val displayName: String
         get() = "<gradient:#17DED6:#17DED6>P<gradient:#17DED6:#2EEE62>oseido<gradient:#2EEE62:#FFF800>ns Spitzha<gradient:#FFF800:#FFF800>cke"
 
-
+    private val mm = MiniMessage.miniMessage()
 
     override fun createItem(): ItemStack = tag(
         ItemBuilder(Material.NETHERITE_PICKAXE)
@@ -33,8 +34,17 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
     override fun onTick(player: Player) {
         if (!player.isUnderWater) return
 
-        player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 1))
+        player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 1, false, false, false))
     }
 
+    override fun onEnterWater(player: Player) {
+        player.sendActionBar(mm.deserialize("<Aqua>Speedboost <green>Aktiviert!!!"))
+
+    }
+
+    override fun onLeaveWater(player: Player) {
+        player.sendActionBar(mm.deserialize("<Aqua>Speedboost <red>Deaktiviert!!!"))
+
+    }
 
 }
