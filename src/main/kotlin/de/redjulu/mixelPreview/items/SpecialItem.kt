@@ -65,6 +65,8 @@ abstract class SpecialItem(
 
 
     open fun onTick(player: Player) {}
+    open fun onEnterWater(player: Player) {}
+    open fun onLeaveWater(player: Player) {}
 
     fun build(): ItemStack = createItem()
 

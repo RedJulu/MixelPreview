@@ -33,8 +33,11 @@ import org.bukkit.event.player.PlayerToggleSprintEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
+import java.util.UUID
 
 class SpecialItemListener : Listener {
+
+    private val inWater = mutableSetOf<UUID>()
 
     private fun dispatch(item: ItemStack?, handler: (SpecialItem) -> Unit) {
         val id = SpecialItemKeys.getItemId(item) ?: return
@@ -50,6 +53,17 @@ class SpecialItemListener : Listener {
         object : BukkitRunnable() {
             override fun run() {
                 Bukkit.getOnlinePlayers().forEach { player ->
+                    val wasInWater = inWater.contains(player.uniqueId)
+                    val nowInWater = player.isInWater
+
+                    if (!wasInWater && nowInWater) {
+                        inWater.add(player.uniqueId)
+                        dispatchHands(player) { it.onEnterWater(player) }
+                    } else if (wasInWater && !nowInWater) {
+                        inWater.remove(player.uniqueId)
+                        dispatchHands(player) { it.onLeaveWater(player) }
+                    }
+
                     dispatchHands(player) { it.onTick(player) }
                 }
             }

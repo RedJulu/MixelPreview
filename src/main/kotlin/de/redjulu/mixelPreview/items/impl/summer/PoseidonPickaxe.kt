@@ -35,4 +35,6 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
 
         player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 1))
     }
+
+
 }
