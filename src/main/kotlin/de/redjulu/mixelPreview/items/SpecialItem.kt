@@ -39,11 +39,8 @@ abstract class SpecialItem(
 
     open fun onInteract(event: PlayerInteractEvent) {}
     open fun onInteractEntity(event: PlayerInteractEntityEvent) {}
-
     open fun onPlace(event: BlockPlaceEvent) {}
-
     open fun onBreak(event: BlockBreakEvent) {}
-
     open fun onBreakWith(event: BlockBreakEvent) {}
     open fun onItemBreak(event: PlayerItemBreakEvent) {}
     open fun onItemConsume(event: PlayerItemConsumeEvent) {}
@@ -63,10 +60,29 @@ abstract class SpecialItem(
     open fun onToggleSprint(event: PlayerToggleSprintEvent) {}
     open fun onKillEntity(event: EntityDeathEvent) {}
 
-
-    open fun onTick(player: Player) {}
     open fun onEnterWater(player: Player) {}
     open fun onLeaveWater(player: Player) {}
+
+    open fun onTickMainHand(player: Player) {}
+    open fun onTickOffHand(player: Player) {}
+    open fun onTickHelmet(player: Player) {}
+    open fun onTickChestplate(player: Player) {}
+    open fun onTickLeggings(player: Player) {}
+    open fun onTickBoots(player: Player) {}
+    open fun onTickInInventory(player: Player) {}
+
+    open fun onEquipMainHand(player: Player) {}
+    open fun onUnequipMainHand(player: Player) {}
+    open fun onEquipOffHand(player: Player) {}
+    open fun onUnequipOffHand(player: Player) {}
+    open fun onEquipHelmet(player: Player) {}
+    open fun onUnequipHelmet(player: Player) {}
+    open fun onEquipChestplate(player: Player) {}
+    open fun onUnequipChestplate(player: Player) {}
+    open fun onEquipLeggings(player: Player) {}
+    open fun onUnequipLeggings(player: Player) {}
+    open fun onEquipBoots(player: Player) {}
+    open fun onUnequipBoots(player: Player) {}
 
     fun build(): ItemStack = createItem()
 
