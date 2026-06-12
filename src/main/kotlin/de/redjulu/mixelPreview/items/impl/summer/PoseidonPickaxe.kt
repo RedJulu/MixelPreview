@@ -6,14 +6,20 @@ import de.redjulu.mixelPreview.utils.ItemBuilder
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.bukkit.Particle.BUBBLE
+import org.bukkit.Particle.DRIPPING_WATER
+import org.bukkit.Particle.FALLING_WATER
 
 
 object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUMMER) {
     override val displayName: String
-        get() = "<gradient:#17DED6:#17DED6>P<gradient:#17DED6:#2EEE62>oseido<gradient:#2EEE62:#FFF800>ns Spitzha<gradient:#FFF800:#FFF800>cke"
+        get() = "<white><obf>aa</obf> <b>[<yellow>Sommer <blue>'26<white>]</b> <b><gradient:#17DED6:#17DED6>P<gradient:#17DED6:#2EEE62>oseido<gradient:#2EEE62:#FFF800>ns Spitzha<gradient:#FFF800:#FFF800>cke</b> <white><obf>aa</obf>"
+
+
 
     private val mm = MiniMessage.miniMessage()
 
@@ -29,12 +35,13 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
                 "    <white>du dich <blue>unterwasser <white>befindest",
 
             )
+            .setEnchantmentGlintOverride(true)
     ).build()
 
     override fun onTick(player: Player) {
         if (!player.isUnderWater) return
 
-        player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 1, false, false, false))
+        player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 3, false, false, false))
     }
 
     override fun onEnterWater(player: Player) {
@@ -45,6 +52,21 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
     override fun onLeaveWater(player: Player) {
         player.sendActionBar(mm.deserialize("<Aqua>Speedboost <red>Deaktiviert!!!"))
 
+    }
+
+    override fun onBreakWith(event: BlockBreakEvent) {
+        val block = event.block
+        val world = block.world
+        val location = block.location.add(0.5, 0.5, 0.5)
+
+        world.spawnParticle(
+            FALLING_WATER,
+            location,
+            50,
+            0.5, 0.5, 0.5,
+            5.0,
+
+        )
     }
 
 }
