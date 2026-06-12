@@ -3,6 +3,7 @@ package de.redjulu.mixelPreview.items.impl.summer
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.utils.ItemBuilder
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes.player
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -38,7 +39,7 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
             .setEnchantmentGlintOverride(true)
     ).build()
 
-    override fun onTick(player: Player) {
+    override fun onTickMainHand(player: Player) {
         if (!player.isUnderWater) return
 
         player.addPotionEffect(PotionEffect(PotionEffectType.CONDUIT_POWER, 2, 3, false, false, false))
