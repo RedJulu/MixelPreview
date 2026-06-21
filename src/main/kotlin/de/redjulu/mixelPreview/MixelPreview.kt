@@ -2,9 +2,11 @@ package de.redjulu.mixelPreview
 
 import com.comphenix.protocol.ProtocolLibrary
 import com.comphenix.protocol.ProtocolManager
+import de.redjulu.mixelPreview.commands.CPSCommandTest
 import de.redjulu.mixelPreview.items.SpecialItemRegistry
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxeVisualizer
 import de.redjulu.mixelPreview.listeners.CreativeAxeListener
+import de.redjulu.mixelPreview.listeners.ShulkerOpenListener
 import de.redjulu.mixelPreview.listeners.SpecialItemListener
 import de.redjulu.mixelPreview.utils.GUIListener
 import org.bukkit.Bukkit
@@ -22,6 +24,8 @@ class MixelPreview : JavaPlugin() {
         protocolManager = ProtocolLibrary.getProtocolManager()
 
         SpecialItemRegistry.init()
+
+        CPSCommandTest.register(this)
 
         val specialItemListener = SpecialItemListener()
         specialItemListener.startTickTask(this)

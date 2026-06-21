@@ -27,6 +27,7 @@ object FindTheItem : SpecialItem("find_the_item", SpecialItemCategory.MISC) {
                 "    <white>du den Namen in das Buch schreibst."
             )
             .hideAdditionalInfo()
+            .setMaxStackSize(1)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {

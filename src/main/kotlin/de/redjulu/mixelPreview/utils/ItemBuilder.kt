@@ -8,6 +8,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Color
+import org.bukkit.FireworkEffect
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
@@ -85,6 +86,21 @@ object ItemBuilder {
                 itemMeta.lore(lore.map { it.decoration(TextDecoration.ITALIC, false) })
             }
             return this
+        }
+
+        fun setFireworkEffect(effect: FireworkEffect): Builder {
+            (itemMeta as? FireworkEffectMeta)?.let {
+                it.effect = effect
+            }
+            return this
+        }
+
+        fun setFireworkColor(vararg colors: Color): Builder {
+            val effect = FireworkEffect.builder()
+                .withColor(*colors)
+                .build()
+
+            return setFireworkEffect(effect)
         }
 
         fun setMiniMessageLore(vararg lore: String): Builder {

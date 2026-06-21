@@ -43,6 +43,7 @@ object CreativeAxe : SpecialItem("creative_axe", SpecialItemCategory.CRATE) {
                 " <dark_gray><b>▸</b> <aqua>Weitere Infos: <gray>'<yellow>Sneak-Linksklick<gray>'"
             )
             .setEnchantmentGlintOverride(true)
+            .setMaxStackSize(1)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {

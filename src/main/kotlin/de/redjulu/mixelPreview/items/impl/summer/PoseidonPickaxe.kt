@@ -18,7 +18,7 @@ import org.bukkit.Particle.FALLING_WATER
 
 object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUMMER) {
     override val displayName: String
-        get() = "<white><obf>aa</obf> <b>[<yellow>Sommer <blue>'26<white>]</b> <b><gradient:#17DED6:#17DED6>P<gradient:#17DED6:#2EEE62>oseido<gradient:#2EEE62:#FFF800>ns Spitzha<gradient:#FFF800:#FFF800>cke</b> <white><obf>aa</obf>"
+        get() = "<white><obf>aa</obf> <b>[<yellow>Sommer <blue>'26<white>]</b> <b><gradient:#17DED6:#2EEE62>Poseidons Spitzhacke</gradient></b> <white><obf>aa</obf>"
 
 
 
@@ -29,7 +29,7 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
             .setName(displayName)
             .setMiniMessageLore(
                 "",
-                " <gradient:#BEFF00:#BEFF00>Ma<gradient:#BEFF00:#00FFEA>che dir Poseidons Kraf<gradient:#00FFEA:#00FFEA>t zu eigen!",
+                " <gradient:#17DED6:#2EEE62>Mache dir Poseidons Kraft zu eigen!</gradient>",
                 "",
                 " <aqua><b>🛈</b> <white>Mit dieser Spitzhacke bekommst",
                 "    <white>du einen <green>Miningspeed boost <white>wenn",
@@ -37,6 +37,7 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
 
             )
             .setEnchantmentGlintOverride(true)
+            .setMaxStackSize(1)
     ).build()
 
     override fun onTickMainHand(player: Player) {
@@ -56,6 +57,8 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
     }
 
     override fun onBreakWith(event: BlockBreakEvent) {
+        if (!event.player.isUnderWater) return
+
         val block = event.block
         val world = block.world
         val location = block.location.add(0.5, 0.5, 0.5)

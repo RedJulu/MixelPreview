@@ -49,6 +49,7 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
             .pdc(soulsKey, PersistentDataType.INTEGER, 0)
             .setUnbreakable(true)
             .hideAdditionalInfo()
+            .setMaxStackSize(1)
     ).build()
 
     private fun update(item: ItemStack): ItemStack {

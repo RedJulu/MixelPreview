@@ -34,6 +34,7 @@ object MushroomAxe : SpecialItem("mushroom_axe", SpecialItemCategory.CRATE) {
                 "    <white>Baumkrone abbauen."
             )
             .addEnchant(Enchantment.EFFICIENCY, 3, true)
+            .setMaxStackSize(1)
     ).build()
 
     override fun onBreakWith(event: BlockBreakEvent) {

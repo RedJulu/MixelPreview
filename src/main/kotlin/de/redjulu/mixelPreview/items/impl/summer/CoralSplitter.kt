@@ -41,6 +41,7 @@ object CoralSplitter : SpecialItem("coral_splitter", SpecialItemCategory.SUMMER)
             )
             .addEnchant(Enchantment.UNBREAKING, 3, true)
             .addEnchant(Enchantment.SILK_TOUCH, 1, true)
+            .setMaxStackSize(1)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {

@@ -53,6 +53,7 @@ object ShrinkStaff : SpecialItem("shrink_staff", SpecialItemCategory.MISC) {
             )
             .addEnchant(Enchantment.EFFICIENCY, 1, true)
             .addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES)
+            .setMaxStackSize(1)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {
