@@ -6,7 +6,6 @@ import de.redjulu.mixelPreview.commands.CPSCommandTest
 import de.redjulu.mixelPreview.items.SpecialItemRegistry
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxeVisualizer
 import de.redjulu.mixelPreview.listeners.CreativeAxeListener
-import de.redjulu.mixelPreview.listeners.ShulkerOpenListener
 import de.redjulu.mixelPreview.listeners.SpecialItemListener
 import de.redjulu.mixelPreview.utils.GUIListener
 import org.bukkit.Bukkit
