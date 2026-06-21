@@ -4,6 +4,7 @@ import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.utils.ItemBuilder
+import org.bukkit.EntityEffect
 import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.entity.Monster
@@ -68,7 +69,7 @@ object CondensedSoul : SpecialItem("CondensedSoul", SpecialItemCategory.HALLOWEE
 
         val item = event.item
         if (item != null) {
-            player.inventory.remove(item)
+            item.amount -= 1
         }
 
         player.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, 30 * 20, 0))
@@ -107,9 +108,6 @@ object CondensedSoul : SpecialItem("CondensedSoul", SpecialItemCategory.HALLOWEE
 
         loc.world?.playSound(loc, Sound.ITEM_TOTEM_USE, 1.0f, 1.0f)
         loc.world?.playSound(loc, Sound.BLOCK_SOUL_SAND_BREAK, 1.2f, 0.8f)
-
-
-        player.playEffect(org.bukkit.EntityEffect.valueOf("TOTEM_RESURRECT"))
 
 
         player.addPotionEffect(PotionEffect(PotionEffectType.INVISIBILITY, 30 * 20, 0))
