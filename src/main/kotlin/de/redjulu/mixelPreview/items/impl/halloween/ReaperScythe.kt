@@ -13,8 +13,10 @@ import de.redjulu.mixelPreview.utils.ItemBuilder
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes.player
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.apache.commons.lang3.ObjectUtils.mode
+import org.bukkit.Color
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
@@ -51,7 +53,7 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
     )
 
     override fun createItem(): ItemStack = tag(
-        ItemBuilder(Material.NETHERITE_HOE)
+        ItemBuilder(Material.IRON_HOE)
             .setName(mm.deserialize("<b><gold><obf>aa </obf><gradient:#575B9B:#72717C>Reape</gradient><gradient:#72717C:#4D4F4F>r Scythe</gradient> <dark_gray><b>[</b><yellow>0/$maxSouls<dark_gray><b>] <gold><obf>aa</obf>"))
             .setMiniMessageLore(
                 "",
@@ -85,7 +87,8 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
         return when (advanced) {
             true -> {
                 ItemBuilder(item)
-                    .setName("<b><gold><obf>aa </obf><rainbow>Reaper Scythe</rainbow> <dark_gray><b>[</b><yellow>$finalSouls/$maxSouls<dark_gray><b>] <gold><obf>aa</obf>")
+                    .setMaterial(Material.NETHERITE_HOE)
+                    .setName("<b><gold><obf>aa </obf><gradient:#393939:#581A1A:#FF0034>Reaper Scythe</gradient> <dark_gray><b>[</b><yellow>$finalSouls/$maxSouls<dark_gray><b>] <gold><obf>aa</obf>")
                     .pdc(soulsKey, PersistentDataType.INTEGER, finalSouls)
                     .pdc(advancedKey, PersistentDataType.BOOLEAN, advanced)
                     .build()
@@ -93,6 +96,7 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
 
             false -> {
                 ItemBuilder(item)
+                    .setMaterial(Material.IRON_HOE)
                     .setName("<b><gold><obf>aa </obf><gradient:#575B9B:#72717C>Reape</gradient><gradient:#72717C:#4D4F4F>r Scythe</gradient> <dark_gray><b>[</b><yellow>$finalSouls/$maxSouls<dark_gray><b>] <gold><obf>aa</obf>")
                     .pdc(soulsKey, PersistentDataType.INTEGER, finalSouls)
                     .pdc(advancedKey, PersistentDataType.BOOLEAN, advanced)
@@ -111,7 +115,11 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
         var updateAdvanced = false
         if ((souls + 1) >= maxSouls) {
             giveLoot(player, advanced)
-            if (advanced) updateAdvanced = true
+            if (advanced) {
+                updateAdvanced = true
+
+                player.sendActionBar(mm.deserialize("<b><gradient:#71A2AE:#868686:#404040>Frenzy Inaktiv</gradient>"))
+            }
         }
         player.setItemInHand(update(item, true, updateAdvanced))
     }
@@ -161,6 +169,8 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
                 }
 
                 player.inventory.removeItem(condensed)
+                player.sendActionBar(mm.deserialize("<b><gradient:#393939:#770010:#FF0034>Frenzy Aktiv</gradient>"))
+                player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f)
                 player.setItemInHand(update(item, false, true))
             }
 
@@ -168,9 +178,47 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
         }
     }
 
+    private val spiralTicks = mutableMapOf<Player, Int>()
+
     override fun onTickMainHand(player: Player) {
         if (player.itemInHand.persistentDataContainer.get(advancedKey, PersistentDataType.BOOLEAN) == true) {
             player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, 2, 3, false, false, false))
+            player.addPotionEffect(PotionEffect(PotionEffectType.STRENGTH, 2, 2, false, false, false))
+            player.addPotionEffect(PotionEffect(PotionEffectType.UNLUCK, 2, 1, false, false, false))
+
+            val loc = player.location
+            val vel = player.velocity
+            val transition = Particle.DustTransition(Color.fromRGB(180, 0, 0), Color.fromRGB(80, 0, 0), 0.8f)
+
+            if (vel.lengthSquared() > 0.05) {
+                val dirX = -vel.x
+                val dirZ = -vel.z
+                val length = Math.sqrt(dirX * dirX + dirZ * dirZ)
+                if (length > 0.01) {
+                    val normDirX = dirX / length
+                    val normDirZ = dirZ / length
+                    val rightX = -normDirZ
+                    val rightZ = normDirX
+                    val baseX = loc.x + normDirX * 1.0
+                    val baseZ = loc.z + normDirZ * 1.0
+                    for (i in -2..2) {
+                        val px = baseX + rightX * i * 0.8
+                        val pz = baseZ + rightZ * i * 0.8
+                        player.world.spawnParticle(Particle.DUST_COLOR_TRANSITION, px, loc.y + 0.1, pz, 1, 0.0, 0.0, 0.0, 0.0, transition)
+                    }
+                }
+            } else {
+                val tick = spiralTicks.getOrDefault(player, 0)
+                for (i in 0..7) {
+                    val angle = Math.toRadians((tick + i * 45).toDouble())
+                    val radius = 0.4 + i * 0.12
+                    val px = loc.x + Math.cos(angle) * radius
+                    val pz = loc.z + Math.sin(angle) * radius
+                    val py = loc.y + 0.1 + i * 0.15
+                    player.world.spawnParticle(Particle.DUST_COLOR_TRANSITION, px, py, pz, 1, 0.0, 0.0, 0.0, 0.0, transition)
+                }
+                spiralTicks[player] = (tick + 8) % 360
+            }
         }
     }
 }
