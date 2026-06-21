@@ -7,6 +7,7 @@ import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxe
+import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe.advancedKey
 import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
 import de.redjulu.mixelPreview.utils.ItemBuilder
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes.player
@@ -14,6 +15,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.apache.commons.lang3.ObjectUtils.mode
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.Sound
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
@@ -106,10 +108,12 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
 
         val souls = item.persistentDataContainer.get(soulsKey, PersistentDataType.INTEGER) ?: 0
         val advanced = item.persistentDataContainer.get(advancedKey, PersistentDataType.BOOLEAN) ?: false
+        var updateAdvanced = false
         if ((souls + 1) >= maxSouls) {
             giveLoot(player, advanced)
+            if (advanced) updateAdvanced = true
         }
-        player.setItemInHand(update(item, true))
+        player.setItemInHand(update(item, true, updateAdvanced))
     }
 
     private fun giveLoot(player: Player, mode: Boolean) {
@@ -141,10 +145,23 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
 
     override fun onInteract(event: PlayerInteractEvent) {
         val item = event.item!!
+        val player = event.player
 
         when(event.action) {
             Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
-                event.player.setItemInHand(update(item, false, true))
+                if (item.persistentDataContainer.get(advancedKey, PersistentDataType.BOOLEAN) == true) return
+                val condensed = player.inventory.contents
+                    .filterNotNull()
+                    .firstOrNull { SpecialItemKeys.isSpecialItem(it, CondensedSoul.id) }
+
+                if (condensed == null) {
+                    player.sendActionBar(mm.deserialize("<red>Du hast keine <b><gradient:#193139:#2AB3A8>Condensed Soul</b> <red>in deinem Inventar!"))
+                    player.playSound(player.location, Sound.ENTITY_VILLAGER_NO, 1f, 1f)
+                    return
+                }
+
+                player.inventory.removeItem(condensed)
+                player.setItemInHand(update(item, false, true))
             }
 
             else -> return

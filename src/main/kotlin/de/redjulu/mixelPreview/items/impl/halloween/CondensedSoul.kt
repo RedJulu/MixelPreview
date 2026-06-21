@@ -4,9 +4,13 @@ import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.utils.ItemBuilder
+import de.redjulu.mixelPreview.MixelPreview
 import org.bukkit.EntityEffect
 import org.bukkit.Material
+import org.bukkit.Particle
 import org.bukkit.Sound
+import org.bukkit.scheduler.BukkitRunnable
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.Monster
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
@@ -18,6 +22,9 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 
 object CondensedSoul : SpecialItem("CondensedSoul", SpecialItemCategory.HALLOWEEN) {
+
+    private val explosionRadius = 8.5
+    private val mobBlacklist = setOf(EntityType.WITHER, EntityType.ENDER_DRAGON)
 
     override val displayName: String
         get() = "<b><gradient:#193139:#2AB3A8>Condensed Soul"
@@ -58,14 +65,47 @@ object CondensedSoul : SpecialItem("CondensedSoul", SpecialItemCategory.HALLOWEE
         loc.world?.createExplosion(loc, 0.0f, false, false)
         loc.world?.playSound(loc, Sound.BLOCK_SOUL_SAND_BREAK, 1.0f, 1.0f)
 
-        val radius = 5.0
-        val nearbyEntities = player.getNearbyEntities(radius, radius, radius)
+        val world = loc.world ?: return
+        val center = loc.clone()
 
-        for (entity in nearbyEntities) {
-            if (entity is Monster) {
-                entity.health = 0.0
+        val nearbyMonsters = player.getNearbyEntities(explosionRadius, explosionRadius, explosionRadius).filterIsInstance<Monster>().toMutableList()
+
+        object : BukkitRunnable() {
+            var tick = 0
+            val maxTicks = 20
+            val maxRadius = explosionRadius
+            val random = java.util.Random()
+
+            override fun run() {
+                tick++
+                val r = maxRadius * (tick.toDouble() / maxTicks)
+                val points = (r * 14).toInt() + 6
+
+                for (i in 0 until points) {
+                    val angle = 2 * Math.PI * i / points + random.nextDouble() * 0.3
+                    val x = r * kotlin.math.cos(angle)
+                    val z = r * kotlin.math.sin(angle)
+                    world.spawnParticle(Particle.SOUL, center.clone().add(x, 0.1, z), 1, 0.0, 0.0, 0.0, 0.03)
+                }
+
+                val it = nearbyMonsters.iterator()
+                while (it.hasNext()) {
+                    val monster = it.next()
+                    if (!monster.isValid) { it.remove(); continue }
+                    if (monster.type in mobBlacklist) { it.remove(); continue }
+                    if (monster.location.distanceSquared(center) <= r * r) {
+                        monster.health = 0.0
+                        it.remove()
+                    }
+                }
+
+                if (tick >= maxTicks) {
+                    nearbyMonsters.forEach { if (it.isValid && it.type !in mobBlacklist) it.health = 0.0 }
+                    world.spawnParticle(Particle.SOUL, center, (explosionRadius * 24).toInt(), explosionRadius, 0.0, explosionRadius, 0.4)
+                    cancel()
+                }
             }
-        }
+        }.runTaskTimer(MixelPreview.instance, 0L, 1L)
 
         val item = event.item
         if (item != null) {
