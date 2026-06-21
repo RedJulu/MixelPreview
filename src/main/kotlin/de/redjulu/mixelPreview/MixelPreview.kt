@@ -2,7 +2,6 @@ package de.redjulu.mixelPreview
 
 import com.comphenix.protocol.ProtocolLibrary
 import com.comphenix.protocol.ProtocolManager
-import de.redjulu.mixelPreview.commands.CPSCommandTest
 import de.redjulu.mixelPreview.items.SpecialItemRegistry
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxeVisualizer
 import de.redjulu.mixelPreview.listeners.CreativeAxeListener
@@ -24,7 +23,6 @@ class MixelPreview : JavaPlugin() {
 
         SpecialItemRegistry.init()
 
-        CPSCommandTest.register(this)
 
         val specialItemListener = SpecialItemListener()
         specialItemListener.startTickTask(this)
