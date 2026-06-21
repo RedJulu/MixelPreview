@@ -2,6 +2,7 @@ package de.redjulu.mixelPreview.items
 
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxe
 import de.redjulu.mixelPreview.items.impl.crate.MushroomAxe
+import de.redjulu.mixelPreview.items.impl.halloween.CondensedSoul
 import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe
 import de.redjulu.mixelPreview.items.impl.misc.FindTheItem
 import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
@@ -34,5 +35,6 @@ object SpecialItemRegistry {
         register(ReaperScythe)
         register(PoseidonPickaxe)
         register(PoseidonKroneRework)
+        register(CondensedSoul)
     }
 }
