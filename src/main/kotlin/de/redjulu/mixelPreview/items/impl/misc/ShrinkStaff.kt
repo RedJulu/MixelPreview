@@ -1,13 +1,11 @@
 package de.redjulu.mixelPreview.items.impl.misc
 
-import de.redjulu.mixelPreview.MixelPreview
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.utils.ItemBuilder
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
-import org.bukkit.NamespacedKey
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.attribute.Attribute
@@ -17,14 +15,11 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import org.bukkit.persistence.PersistentDataType
+import kotlin.math.abs
 
 object ShrinkStaff : SpecialItem("shrink_staff", SpecialItemCategory.MISC) {
 
     private val mm = MiniMessage.miniMessage()
-
-    val stageKey: NamespacedKey
-        get() = NamespacedKey(MixelPreview.instance, "shrink_stage")
 
     override val displayName = "<gradient:#79BCD7:#8554B6>Shrink Staff</gradient>"
 
@@ -54,6 +49,8 @@ object ShrinkStaff : SpecialItem("shrink_staff", SpecialItemCategory.MISC) {
             .addEnchant(Enchantment.EFFICIENCY, 1, true)
             .addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES)
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {
@@ -72,8 +69,11 @@ object ShrinkStaff : SpecialItem("shrink_staff", SpecialItemCategory.MISC) {
             return
         }
 
-        val currentStage = player.persistentDataContainer
-            .getOrDefault(stageKey, PersistentDataType.INTEGER, 0)
+        val currentScale = player.getAttribute(Attribute.SCALE)?.baseValue ?: 1.0
+        val currentStage = scales
+            .mapIndexed { i, s -> i to abs(s.toDouble() - currentScale) }
+            .minByOrNull { it.second }
+            ?.first ?: 2
 
         val newStage = when {
             player.isSneaking -> {
@@ -93,7 +93,6 @@ object ShrinkStaff : SpecialItem("shrink_staff", SpecialItemCategory.MISC) {
         }
 
         player.setCooldown(item.type, 10)
-        player.persistentDataContainer.set(stageKey, PersistentDataType.INTEGER, newStage)
         player.getAttribute(Attribute.SCALE)?.baseValue = scales[newStage].toDouble()
 
         player.world.spawnParticle(

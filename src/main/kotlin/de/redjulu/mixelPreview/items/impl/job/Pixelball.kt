@@ -38,12 +38,13 @@ object Pixelball : SpecialItem("Pixelball", SpecialItemCategory.JOB) {
                 "    <white>Typs zu erhalten",
                 "",
                 "<dark_gray><b>▸ </b><gray>Eingefangener Typ: <gold>Keiner",
-                "",
-                "<dark_gray><b>▸ </b><gray>Klicke um dir das Rezept",
-                "  <gray>anzeigen zu lassen"
+                ""
             )
             .hideAdditionalInfo()
             .setFireworkColor(Color.RED)
+            .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     private fun update(item: ItemStack, type: EntityType): ItemStack {
@@ -72,9 +73,7 @@ object Pixelball : SpecialItem("Pixelball", SpecialItemCategory.JOB) {
                 "    <white>Typs zu erhalten",
                 "",
                 "<dark_gray><b>▸ </b><gray>Eingefangener Typ: <gold>$formattedTypeName",
-                "",
-                "<dark_gray><b>▸ </b><gray>Klicke um dir das Rezept",
-                "  <gray>anzeigen zu lassen"
+                ""
             )
             .pdc(capturekey, PersistentDataType.INTEGER, next)
             .pdc(capturedTypeKey, PersistentDataType.STRING, type.name)

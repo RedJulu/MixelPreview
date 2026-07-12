@@ -46,9 +46,11 @@ object CondensedSoul : SpecialItem("CondensedSoul", SpecialItemCategory.HALLOWEE
             )
             .setEnchantmentGlintOverride(true)
             .hideAdditionalInfo()
-            // .setUnenchantable(true) Bring nichts weil das nur ein PDC added und ich noch keinen Listener dafür hab (sollte ich ma machen xd)
+            .hideAdditionalInfo()
             // .setRarity(ItemRarity.EPIC) Hey, bring hier nix lennox weil du den name overridest
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {

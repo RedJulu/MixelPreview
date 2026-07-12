@@ -38,6 +38,8 @@ object PoseidonPickaxe : SpecialItem("poseidon_pickaxe", SpecialItemCategory.SUM
             )
             .setEnchantmentGlintOverride(true)
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onTickMainHand(player: Player) {

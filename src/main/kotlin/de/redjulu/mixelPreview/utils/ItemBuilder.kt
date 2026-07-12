@@ -103,6 +103,13 @@ object ItemBuilder {
             return setFireworkEffect(effect)
         }
 
+        fun setFireworkStrength(strength: Int): Builder {
+            (itemMeta as? FireworkMeta)?.let {
+                it.power = strength
+            }
+            return this
+        }
+
         fun setMiniMessageLore(vararg lore: String): Builder {
             if (lore.isEmpty()) {
                 itemMeta.lore(null)
@@ -135,15 +142,21 @@ object ItemBuilder {
         }
 
         fun setUnrenamable(unrenamable: Boolean): Builder {
+            val key = NamespacedKey(MixelPreview.instance, "unrenamable")
             if (unrenamable) {
-                pdc(NamespacedKey(MixelPreview.instance, "unrenamable"), PersistentDataType.BOOLEAN, true)
+                pdc(key, PersistentDataType.BOOLEAN, true)
+            } else {
+                itemMeta.persistentDataContainer.remove(key)
             }
             return this
         }
 
         fun setUnenchantable(unenchantable: Boolean): Builder {
+            val key = NamespacedKey(MixelPreview.instance, "unenchantable")
             if (unenchantable) {
-                pdc(NamespacedKey(MixelPreview.instance, "unenchantable"), PersistentDataType.BOOLEAN, true)
+                pdc(key, PersistentDataType.BOOLEAN, true)
+            } else {
+                itemMeta.persistentDataContainer.remove(key)
             }
             return this
         }

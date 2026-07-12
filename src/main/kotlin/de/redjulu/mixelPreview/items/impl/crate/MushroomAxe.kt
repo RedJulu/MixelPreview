@@ -35,6 +35,8 @@ object MushroomAxe : SpecialItem("mushroom_axe", SpecialItemCategory.CRATE) {
             )
             .addEnchant(Enchantment.EFFICIENCY, 3, true)
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onBreakWith(event: BlockBreakEvent) {
