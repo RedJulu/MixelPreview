@@ -2,9 +2,8 @@ package de.redjulu.mixelPreview.items.impl.misc
 
 import de.redjulu.mixelPreview.MixelPreview
 import de.redjulu.mixelPreview.utils.DialogBuilder
-import net.kyori.adventure.title.Title
+import de.redjulu.mixelPreview.utils.LoadingTitle
 import net.kyori.adventure.text.minimessage.MiniMessage
-import net.kyori.adventure.util.Ticks
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Material
@@ -60,7 +59,7 @@ class FindTheItemUI {
 
                 player.setCooldown(Material.WRITTEN_BOOK, 20 * 3)
 
-                val loadingTask = startLoadingTitle(player)
+                LoadingTitle.load(player)
 
                 plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
                     val candidates = collectCandidateLocations(player)
@@ -68,19 +67,7 @@ class FindTheItemUI {
                     plugin.server.scheduler.runTask(plugin, Runnable {
                         val containers = scanContainers(candidates, input)
 
-                        loadingTask.cancel()
-
-                        player.showTitle(
-                            Title.title(
-                                mm.deserialize("<green><b>✔"),
-                                mm.deserialize("<gray>Suche erfolgreich"),
-                                Title.Times.times(
-                                    Ticks.duration(5),
-                                    Ticks.duration(40),
-                                    Ticks.duration(15)
-                                )
-                            )
-                        )
+                        LoadingTitle.finish(player, "<green><b>✔", "<gray>Suche erfolgreich")
 
                         if (containers.isEmpty()) {
                             player.sendMessage(mm.deserialize("<red>Keine Items gefunden."))
@@ -100,28 +87,6 @@ class FindTheItemUI {
                 })
             }
             .show(player)
-    }
-
-    private fun startLoadingTitle(player: Player): BukkitTask {
-        val frames = listOf("", ".", "..", "...")
-        var frame = 0
-
-        return plugin.server.scheduler.runTaskTimer(plugin, Runnable {
-            val dots = frames[frame % frames.size]
-            frame++
-
-            player.showTitle(
-                Title.title(
-                    mm.deserialize("<gray><i>Suche$dots"),
-                    mm.deserialize(""),
-                    Title.Times.times(
-                        Ticks.duration(0),
-                        Ticks.duration(10),
-                        Ticks.duration(0)
-                    )
-                )
-            )
-        }, 0L, 8L)
     }
 
     private fun collectCandidateLocations(player: Player, radius: Int = 40): List<Location> {

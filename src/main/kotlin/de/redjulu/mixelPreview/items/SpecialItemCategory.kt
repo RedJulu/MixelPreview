@@ -17,7 +17,8 @@ enum class SpecialItemCategory(
     HALLOWEEN("Halloween", "<gradient:#FF7518:#1A1A2E>Halloween</gradient>", Material.JACK_O_LANTERN),
     WINTER("Winter", "<gradient:#A8D8EA:#FFFFFF>Winter</gradient>", Material.SNOWBALL),
     EASTER("Ostern", "<gradient:#FFB7C5:#98FB98>Ostern</gradient>", Material.EGG),
-    MISC("Sonstiges", "<gradient:#888888:#BBBBBB>Sonstiges</gradient>", Material.CHEST);
+    MISC("Sonstiges", "<gradient:#888888:#BBBBBB>Sonstiges</gradient>", Material.CHEST),
+    GROUPS("Gruppen", "<gradient:#4ECDC4:#44B09E>Gruppen</gradient>", Material.ITEM_FRAME);
 
     val filterable: Boolean get() = this != ALL
 }

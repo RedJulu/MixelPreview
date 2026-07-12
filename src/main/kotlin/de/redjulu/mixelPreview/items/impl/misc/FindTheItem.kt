@@ -28,6 +28,8 @@ object FindTheItem : SpecialItem("find_the_item", SpecialItemCategory.MISC) {
             )
             .hideAdditionalInfo()
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {

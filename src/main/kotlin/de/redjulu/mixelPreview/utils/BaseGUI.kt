@@ -45,6 +45,11 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         }
 
         @JvmStatic
+        fun saveHistory(uuid: UUID, gui: BaseGUI<*, *, *>) {
+            HISTORY[uuid] = gui
+        }
+
+        @JvmStatic
         fun isPlaceholderItem(item: ItemStack?): Boolean {
             if (item == null || !item.hasItemMeta()) return false
             return item.itemMeta?.persistentDataContainer?.has(placeholderKey, PersistentDataType.BYTE) == true
@@ -381,7 +386,7 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
 
         val nextItem = ItemStack(Material.ARROW).apply {
             itemMeta = itemMeta?.apply {
-                displayName(if (hasPrev) MiniMessage.miniMessage().deserialize("<gray>Nächste Seite »") else
+                displayName(if (hasNext) MiniMessage.miniMessage().deserialize("<gray>Nächste Seite »") else
                     MiniMessage.miniMessage().deserialize("<red><st>Nächste Seite »"))
             }
         }

@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.Sound
 import org.bukkit.block.Block
 import org.bukkit.entity.Display
+import org.bukkit.entity.Item
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
@@ -44,6 +45,8 @@ object CreativeAxe : SpecialItem("creative_axe", SpecialItemCategory.CRATE) {
             )
             .setEnchantmentGlintOverride(true)
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {
@@ -154,7 +157,7 @@ object CreativeAxe : SpecialItem("creative_axe", SpecialItemCategory.CRATE) {
         val box = BoundingBox(minX, minY, minZ, maxX, maxY, maxZ)
 
         return loc1.world.getNearbyEntities(box) { entity ->
-            entity !is Display
+            entity !is Display && entity !is Item
         }.isNotEmpty()
     }
 

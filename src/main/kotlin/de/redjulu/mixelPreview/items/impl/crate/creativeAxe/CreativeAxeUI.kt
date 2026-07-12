@@ -12,11 +12,10 @@ import de.redjulu.mixelPreview.types.BlockDataType
 import de.redjulu.mixelPreview.utils.BaseGUI
 import de.redjulu.mixelPreview.utils.DialogBuilder
 import de.redjulu.mixelPreview.utils.ItemBuilder
+import de.redjulu.mixelPreview.utils.LoadingTitle
 import de.redjulu.mixelPreview.utils.SimpleGUI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
-import net.kyori.adventure.title.Title
-import net.kyori.adventure.util.Ticks
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.Sound
@@ -146,22 +145,9 @@ class CreativeAxeUI(
 
             val material = placedItem!!.type
 
-            val frames = listOf("", ".", "..", "...")
-            var frame = 0
-            val loadingTask = MixelPreview.instance.server.scheduler.runTaskTimer(MixelPreview.instance, Runnable {
-                val dots = frames[frame % frames.size]
-                frame++
-                p.showTitle(
-                    Title.title(
-                        mm.deserialize("<gray><i>Fülle$dots"),
-                        mm.deserialize(""),
-                        Title.Times.times(Ticks.duration(0), Ticks.duration(10), Ticks.duration(0))
-                    )
-                )
-            }, 0L, 8L)
+            LoadingTitle.load(p)
 
             val success = fill(p, currentAxe, material, placedItem)
-            loadingTask.cancel()
 
             if (!success) {
                 val leftover = p.inventory.addItem(placedItem)
@@ -227,21 +213,13 @@ class CreativeAxeUI(
 
         if (foreignBlocks.isNotEmpty()) {
             player.playSound(player.location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f)
-            player.showTitle(Title.title(
-                mm.deserialize("<red><b>❌"),
-                mm.deserialize("<gray>Füllen fehlgeschlagen <dark_gray>- <gray>Selektion nicht leer"),
-                Title.Times.times(Ticks.duration(5), Ticks.duration(40), Ticks.duration(15))
-            ))
+            LoadingTitle.finish(player, "<red><b>❌", "<gray>Füllen fehlgeschlagen <dark_gray>- <gray>Selektion nicht leer")
             return false
         }
 
         if (emptyBlocks.isEmpty()) {
             player.playSound(player.location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f)
-            player.showTitle(Title.title(
-                mm.deserialize("<red><b>❌"),
-                mm.deserialize("<gray>Füllen fehlgeschlagen <dark_gray>- <gray>bereits gefüllt"),
-                Title.Times.times(Ticks.duration(5), Ticks.duration(40), Ticks.duration(15))
-            ))
+            LoadingTitle.finish(player, "<red><b>❌", "<gray>Füllen fehlgeschlagen <dark_gray>- <gray>bereits gefüllt")
             return false
         }
 
@@ -251,11 +229,7 @@ class CreativeAxeUI(
 
         if (player.gameMode != GameMode.CREATIVE && totalAvailable < needed) {
             player.playSound(player.location, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f)
-            player.showTitle(Title.title(
-                mm.deserialize("<red><b>✗"),
-                mm.deserialize("<gray>Füllen fehlgeschlagen <dark_gray>- <gray>nicht genug Blöcke"),
-                Title.Times.times(Ticks.duration(5), Ticks.duration(40), Ticks.duration(15))
-            ))
+            LoadingTitle.finish(player, "<red><b>✗", "<gray>Füllen fehlgeschlagen <dark_gray>- <gray>nicht genug Blöcke")
             return false
         }
 
@@ -291,11 +265,7 @@ class CreativeAxeUI(
             CreativeAxeVisualizer.stopVisualizer(player)
             player.playSound(player.location, Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f)
             player.sendActionBar(mm.deserialize("<green>Selektion gefüllt! <dark_gray>(<gray>$needed Blöcke<dark_gray>)"))
-            player.showTitle(Title.title(
-                mm.deserialize("<green><b>✔"),
-                mm.deserialize("<gray>Selektion gefüllt"),
-                Title.Times.times(Ticks.duration(5), Ticks.duration(40), Ticks.duration(15))
-            ))
+            LoadingTitle.finish(player, "<green><b>✔", "<gray>Selektion gefüllt")
         })
 
         return true

@@ -70,6 +70,8 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
             .setUnbreakable(true)
             .hideAdditionalInfo()
             .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
 
@@ -157,6 +159,7 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
 
         when(event.action) {
             Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> {
+                event.isCancelled = true
                 if (item.persistentDataContainer.get(advancedKey, PersistentDataType.BOOLEAN) == true) return
                 val condensed = player.inventory.contents
                     .filterNotNull()

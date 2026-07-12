@@ -7,6 +7,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
+import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
@@ -37,6 +38,7 @@ object PoseidonCrown : SpecialItem("Poseidon_Krone", SpecialItemCategory.SUMMER)
             .addEnchant(Enchantment.AQUA_AFFINITY, 5, true)
             .addEnchant(Enchantment.RESPIRATION, 5, true)
             .setUnrenamable(true)
+            .setUnenchantable(true)
             .setEquippable(EquipmentSlot.HEAD)
             .setMaxStackSize(1)
             .hideEnchants()
@@ -57,5 +59,9 @@ object PoseidonCrown : SpecialItem("Poseidon_Krone", SpecialItemCategory.SUMMER)
                 player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 2, 0, false, false, false))
             }
         }
+    }
+
+    override fun onPlace(event: BlockPlaceEvent) {
+        event.isCancelled = true
     }
 }

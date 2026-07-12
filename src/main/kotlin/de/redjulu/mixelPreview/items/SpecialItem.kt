@@ -84,6 +84,7 @@ abstract class SpecialItem(
     open fun onEquipBoots(player: Player) {}
     open fun onUnequipBoots(player: Player) {}
 
+
     fun build(): ItemStack = createItem()
 
     protected fun tag(builder: ItemBuilder.Builder): ItemBuilder.Builder =

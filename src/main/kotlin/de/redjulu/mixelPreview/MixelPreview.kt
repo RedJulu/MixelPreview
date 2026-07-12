@@ -5,6 +5,7 @@ import com.comphenix.protocol.ProtocolManager
 import de.redjulu.mixelPreview.items.SpecialItemRegistry
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxeVisualizer
 import de.redjulu.mixelPreview.listeners.CreativeAxeListener
+import de.redjulu.mixelPreview.listeners.ItemProtectionListener
 import de.redjulu.mixelPreview.listeners.SpecialItemListener
 import de.redjulu.mixelPreview.utils.GUIListener
 import org.bukkit.Bukkit
@@ -23,13 +24,13 @@ class MixelPreview : JavaPlugin() {
 
         SpecialItemRegistry.init()
 
-
         val specialItemListener = SpecialItemListener()
         specialItemListener.startTickTask(this)
 
         server.pluginManager.registerEvents(GUIListener(), this)
         server.pluginManager.registerEvents(specialItemListener, this)
         server.pluginManager.registerEvents(CreativeAxeListener(), this)
+        server.pluginManager.registerEvents(ItemProtectionListener(), this)
     }
 
     override fun onDisable() {
