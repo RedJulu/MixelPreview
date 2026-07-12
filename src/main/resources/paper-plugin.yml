@@ -3,7 +3,7 @@ version: '${version}'
 
 main: de.redjulu.mixelPreview.MixelPreview
 bootstrapper: de.redjulu.mixelPreview.MixelPreviewBootstrap
-api-version: '1.21.8'
+api-version: '1.21.11'
 
 author: RedJulu
 
