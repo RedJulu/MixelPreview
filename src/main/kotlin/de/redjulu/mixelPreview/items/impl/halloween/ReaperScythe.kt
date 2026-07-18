@@ -6,8 +6,10 @@ import de.redjulu.mixelPreview.MixelPreview
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.items.SpecialItemKeys
+import de.redjulu.mixelPreview.items.impl.crate.InvisEye
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxe
 import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe.advancedKey
+import de.redjulu.mixelPreview.items.impl.job.Pixelball
 import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
 import de.redjulu.mixelPreview.utils.ItemBuilder
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes.player
@@ -39,17 +41,24 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
     val soulsKey = NamespacedKey(MixelPreview.instance, "reaper_scythe_souls")
     val advancedKey = NamespacedKey(MixelPreview.instance, "reaper_scythe_advanced")
 
-    private const val maxSouls = 3
+    private const val maxSouls = 50
 
 
-    val lootpoolStandard = mapOf<Any, Double>(
-        ShrinkStaff.id to 15.0,
-        Material.DIAMOND to 25.0,
-        Material.GOLD_INGOT to 60.0
+    val lootpoolStandard = mapOf<Pair<Any, Int>, Double>(
+        Pair(Material.TOTEM_OF_UNDYING.id, 1) to 1.0,
+        Pair(Material.DIAMOND, 3) to 25.0,
+        Pair(Material.GOLD_INGOT, 6) to 50.0,
+        Pair(Material.NETHERITE_SCRAP, 1) to 2.0,
+        Pair(Material.ECHO_SHARD, 2) to 5.0,
     )
 
-    val lootpoolAdvanced = mapOf<Any, Double>(
-        CreativeAxe.id to 100.0
+    val lootpoolAdvanced = mapOf<Pair<Any, Int>, Double>(
+        Pair(CondensedSoul.id, 1) to 5.0,
+        Pair(InvisEye.id, 2) to 10.0,
+        Pair(Material.NETHER_STAR, 1) to 5.0,
+        Pair(Material.GOLD_BLOCK, 2) to 50.0,
+        Pair(Material.DIAMOND_BLOCK, 1) to 25.0,
+        Pair(Material.NETHERITE_INGOT, 1) to 2.0,
     )
 
     override fun createItem(): ItemStack = tag(
@@ -135,9 +144,10 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
         for ((reward, weight) in lootpool) {
             randomValue -= weight
             if (randomValue <= 0) {
-                selectedReward = when (reward) {
-                    is String -> SpecialItemKeys.getItem(reward)
-                    is Material -> ItemStack(reward)
+                val (item, amount) = reward
+                selectedReward = when (item) {
+                    is String -> SpecialItemKeys.getItem(item)?.apply { this.amount = amount }
+                    is Material -> ItemStack(item, amount)
                     else -> null
                 }
                 break
@@ -187,7 +197,7 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
         if (player.itemInHand.persistentDataContainer.get(advancedKey, PersistentDataType.BOOLEAN) == true) {
             player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, 2, 3, false, false, false))
             player.addPotionEffect(PotionEffect(PotionEffectType.STRENGTH, 2, 2, false, false, false))
-            player.addPotionEffect(PotionEffect(PotionEffectType.UNLUCK, 2, 1, false, false, false))
+            player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 2, 1, false, false, false))
 
             val loc = player.location
             val vel = player.velocity
