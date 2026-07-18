@@ -1,5 +1,7 @@
 package de.redjulu.mixelPreview.utils
 
+import de.redjulu.mixelPreview.MixelPreview
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -109,6 +111,22 @@ class GUIListener : Listener {
                         guiTop.updateDynamicButtons(player)
                         return
                     }
+
+                    for (i in 0 until top.size) {
+                        if (!guiTop.isInteractableSlot(i)) continue
+                        val s = top.getItem(i)
+                        if (s != null && s.type != Material.AIR) continue
+
+                        val predicate = guiTop.getInteractablePredicate(i)
+                        if (predicate != null && !predicate(fromPlayer)) continue
+
+                        val itemCopy = fromPlayer.clone()
+                        top.setItem(i, itemCopy)
+                        fromPlayer.amount = 0
+                        event.isCancelled = true
+                        guiTop.updateDynamicButtons(player)
+                        return
+                    }
                 }
                 event.isCancelled = true
             }
@@ -124,7 +142,12 @@ class GUIListener : Listener {
 
         gui.onClose(player)
 
-        if (!gui.isSwitching && !gui.isDialogOpen) {
+        if (gui.isDialogOpen) {
+            gui.reopenFor(player)
+            return
+        }
+
+        if (!gui.isSwitching) {
             for (i in 0 until event.inventory.size) {
                 if (gui.isPlaceholderSlot(i) || gui.isInteractableSlot(i)) {
                     val item = event.inventory.getItem(i)
@@ -137,9 +160,7 @@ class GUIListener : Listener {
             }
         }
 
-        if (!gui.isDialogOpen) {
-            clearButtons(event.inventory)
-        }
+        clearButtons(event.inventory)
     }
 
     @EventHandler

@@ -11,6 +11,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import java.util.*
@@ -29,7 +30,8 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
     b: Int,
     l: Int,
     r: Int,
-    defaultCategory: C?
+    defaultCategory: C?,
+    inventoryType: InventoryType = InventoryType.CHEST
 ) : InventoryHolder {
 
     companion object {
@@ -56,12 +58,24 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         }
     }
 
-    var size: Int = rows * 9
-    private val inv: Inventory
+    var size: Int = if (inventoryType == InventoryType.CHEST) rows * 9 else inventoryType.defaultSize
+        private set
+    var title: Component = titleKey
+        private set
+    private var titleSerialized: String = MiniMessage.miniMessage().serialize(titleKey)
+    var type: InventoryType = inventoryType
+        private set
+    private var inv: Inventory
     protected val contentSlots = mutableListOf<Int>()
+    private val storedRows = rows
+    private val storedT = t
+    private val storedB = b
+    private val storedL = l
+    private val storedR = r
     protected val animatedSlots = mutableMapOf<Int, List<ItemStack>>()
     protected val activeItems = mutableMapOf<Int, ItemStack>()
     protected val interactableSlots = mutableSetOf<Int>()
+    protected val interactablePredicates = mutableMapOf<Int, (ItemStack) -> Boolean>()
     protected val ignoredSlots = mutableSetOf<Int>()
     protected val placeholderSlots = mutableSetOf<Int>()
     protected val prioritySlots = mutableSetOf<Int>()
@@ -76,24 +90,81 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
     protected var allItems = mutableListOf<T>()
     protected var currentCategory: C? = defaultCategory
     protected var page: Int = 0
-    protected val pageSize: Int
+    protected var pageSize: Int = 0
+        private set
 
     var isSwitching: Boolean = false
     var isDialogOpen: Boolean = false
+    private var internalClose = false
 
     protected var stages: List<S> = emptyList()
     protected var stageIndex: Int = 0
     val currentStage: S? get() = stages.getOrNull(stageIndex)
 
     init {
-        this.inv = Bukkit.createInventory(this, size, titleKey)
+        this.inv = createInventory()
+        recalculateContentSlots()
+    }
 
-        for (row in t until (rows - b)) {
-            for (col in l until (9 - r)) {
-                contentSlots.add(col + (row * 9))
+    private fun createInventory(): Inventory {
+        return if (type == InventoryType.CHEST)
+            Bukkit.createInventory(this, size, title)
+        else
+            Bukkit.createInventory(this, type, title)
+    }
+
+    private fun recalculateContentSlots() {
+        contentSlots.clear()
+        if (type != InventoryType.CHEST) {
+            for (i in 0 until size) {
+                contentSlots.add(i)
+            }
+        } else {
+            for (row in storedT until (storedRows - storedB)) {
+                for (col in storedL until (9 - storedR)) {
+                    contentSlots.add(col + (row * 9))
+                }
             }
         }
         this.pageSize = contentSlots.size
+    }
+
+    fun setSize(newRows: Int, player: Player?) {
+        this.type = InventoryType.CHEST
+        val newSize = newRows * 9
+        if (newSize == size) return
+        this.size = newSize
+        rebuildInventory(player)
+    }
+
+    fun setTitle(newTitle: Component, player: Player?) {
+        val serialized = MiniMessage.miniMessage().serialize(newTitle)
+        if (serialized == titleSerialized) return
+        this.titleSerialized = serialized
+        this.title = newTitle
+        rebuildInventory(player)
+    }
+
+    fun setType(newType: InventoryType, player: Player?) {
+        if (this.type == newType) return
+        this.type = newType
+        this.size = if (newType == InventoryType.CHEST) storedRows * 9 else newType.defaultSize
+        rebuildInventory(player)
+    }
+
+    private fun rebuildInventory(player: Player?) {
+        GUIListener.clearButtons(inv)
+        this.inv = createInventory()
+        recalculateContentSlots()
+
+        if (player != null && player.openInventory.topInventory.holder === this) {
+            val wasSwitching = isSwitching
+            internalClose = true
+            player.closeInventory()
+            internalClose = false
+            open(player, false)
+            isSwitching = wasSwitching
+        }
     }
 
     protected fun defineStages(vararg stageElements: S) {
@@ -148,6 +219,7 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         GUIListener.clearButtons(inv)
         animatedSlots.clear()
         interactableSlots.clear()
+        interactablePredicates.clear()
         placeholderSlots.clear()
         prioritySlots.clear()
         placeholderItems.clear()
@@ -173,6 +245,7 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         GUIListener.clearButtons(inv)
         animatedSlots.clear()
         interactableSlots.clear()
+        interactablePredicates.clear()
         placeholderSlots.clear()
         prioritySlots.clear()
         placeholderItems.clear()
@@ -203,6 +276,17 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         if (interactable) interactableSlots.add(slot)
         else interactableSlots.remove(slot)
     }
+
+    protected fun setInteractable(slot: Int) {
+        setInteractable(slot, true)
+    }
+
+    protected fun setInteractable(slot: Int, predicate: (ItemStack) -> Boolean) {
+        interactableSlots.add(slot)
+        interactablePredicates[slot] = predicate
+    }
+
+    fun getInteractablePredicate(slot: Int): ((ItemStack) -> Boolean)? = interactablePredicates[slot]
 
     protected fun setIgnored(slot: Int) {
         ignoredSlots.add(slot)
@@ -359,6 +443,13 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         }
     }
 
+    protected fun fillSlots(item: ItemStack, range: IntRange, vararg skip: Int) {
+        for (slot in range) {
+            if (slot in skip) continue
+            inv.setItem(slot, item)
+        }
+    }
+
     protected fun fillContentArea(material: Material) {
         val item = ItemStack(material).apply {
             itemMeta = itemMeta?.apply { displayName(Component.empty()) }
@@ -402,10 +493,41 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         animatedSlots[slot] = frames
     }
 
+    fun getInteractableItemCount(): Int {
+        return interactableSlots.sumOf { slot ->
+            val item = inv.getItem(slot)
+            if (item != null && item.type != Material.AIR) item.amount else 0
+        }
+    }
+
+    fun isInteractableSlotEmpty(slot: Int): Boolean {
+        if (!interactableSlots.contains(slot)) return false
+        val item = inv.getItem(slot)
+        return item == null || item.type == Material.AIR
+    }
+
     abstract fun compose(player: Player)
     open fun onPlaceholderUpdate(player: Player, slot: Int, item: ItemStack) {}
 
     override fun getInventory(): Inventory = inv
 
     open fun onClose(player: Player) {}
+
+    @Volatile
+    private var reopening = false
+
+    fun reopenFor(player: Player) {
+        if (reopening) return
+        reopening = true
+        try {
+            internalClose = true
+            player.openInventory(inv)
+            internalClose = false
+            openSound?.let { player.playSound(player.location, it, 0.5f, 1.0f) }
+        } finally {
+            reopening = false
+        }
+    }
+
+    fun isInternalClose(): Boolean = internalClose
 }

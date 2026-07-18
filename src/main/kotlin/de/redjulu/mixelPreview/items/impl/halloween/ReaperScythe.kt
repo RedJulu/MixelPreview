@@ -1,20 +1,12 @@
 package de.redjulu.mixelPreview.items.impl.halloween
 
-import com.google.common.collect.Iterators.advance
-import com.ibm.icu.impl.SimpleFormatterImpl.IterInternal.step
 import de.redjulu.mixelPreview.MixelPreview
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemCategory
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.items.impl.crate.InvisEye
-import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxe
-import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe.advancedKey
-import de.redjulu.mixelPreview.items.impl.job.Pixelball
-import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
 import de.redjulu.mixelPreview.utils.ItemBuilder
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes.player
 import net.kyori.adventure.text.minimessage.MiniMessage
-import org.apache.commons.lang3.ObjectUtils.mode
 import org.bukkit.Color
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -41,11 +33,11 @@ object ReaperScythe : SpecialItem("reaper_scythe", SpecialItemCategory.HALLOWEEN
     val soulsKey = NamespacedKey(MixelPreview.instance, "reaper_scythe_souls")
     val advancedKey = NamespacedKey(MixelPreview.instance, "reaper_scythe_advanced")
 
-    private const val maxSouls = 50
+    private const val maxSouls = 2
 
 
     val lootpoolStandard = mapOf<Pair<Any, Int>, Double>(
-        Pair(Material.TOTEM_OF_UNDYING.id, 1) to 1.0,
+        Pair(Material.TOTEM_OF_UNDYING, 1) to 1.0,
         Pair(Material.DIAMOND, 3) to 25.0,
         Pair(Material.GOLD_INGOT, 6) to 50.0,
         Pair(Material.NETHERITE_SCRAP, 1) to 2.0,

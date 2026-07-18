@@ -6,6 +6,7 @@ import de.redjulu.mixelPreview.items.impl.crafting.RocketBox
 import de.redjulu.mixelPreview.items.impl.crate.InvisEye
 import de.redjulu.mixelPreview.items.impl.halloween.CondensedSoul
 import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe
+import de.redjulu.mixelPreview.items.impl.job.Baler
 import de.redjulu.mixelPreview.items.impl.job.Pixelball
 import de.redjulu.mixelPreview.items.impl.misc.FindTheItem
 import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
@@ -55,5 +56,6 @@ object SpecialItemRegistry {
         registerGroup("halloween_weapons", "<gradient:#575B9B:#4D4F4F>Halloween Waffen", ReaperScythe, CondensedSoul)
 
         register(InvisEye)
+        register(Baler)
     }
 }
