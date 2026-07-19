@@ -1,12 +1,14 @@
 package de.redjulu.mixelPreview.items
 
+import de.redjulu.mixelPreview.items.impl.crafting.InfiCarrot
+import de.redjulu.mixelPreview.items.impl.crafting.RocketBox
 import de.redjulu.mixelPreview.items.impl.crate.creativeAxe.CreativeAxe
 import de.redjulu.mixelPreview.items.impl.crate.MushroomAxe
-import de.redjulu.mixelPreview.items.impl.crafting.RocketBox
 import de.redjulu.mixelPreview.items.impl.crate.InvisEye
 import de.redjulu.mixelPreview.items.impl.halloween.CondensedSoul
 import de.redjulu.mixelPreview.items.impl.halloween.ReaperScythe
 import de.redjulu.mixelPreview.items.impl.job.Baler
+import de.redjulu.mixelPreview.items.impl.job.MagnetPickaxe
 import de.redjulu.mixelPreview.items.impl.job.Pixelball
 import de.redjulu.mixelPreview.items.impl.misc.FindTheItem
 import de.redjulu.mixelPreview.items.impl.misc.ShrinkStaff
@@ -51,6 +53,8 @@ object SpecialItemRegistry {
         register(CreativeAxe)
         register(Pixelball)
         register(RocketBox)
+        register(MagnetPickaxe)
+        register(InfiCarrot)
 
         registerGroup("poseidon_tools", "<gradient:#17DED6:#2EEE62>Poseidon's Tools", PoseidonPickaxe, PoseidonCrown)
         registerGroup("halloween_weapons", "<gradient:#575B9B:#4D4F4F>Halloween Waffen", ReaperScythe, CondensedSoul)
