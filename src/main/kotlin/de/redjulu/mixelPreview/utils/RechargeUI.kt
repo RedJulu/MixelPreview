@@ -88,10 +88,14 @@ abstract class RechargeUI(
     // --- Inventory helpers ---
 
     protected fun countInInventory(player: Player, material: Material, ignore: ((ItemStack) -> Boolean)? = null): Int {
+        return countInInventory(player, setOf(material), ignore)
+    }
+
+    protected fun countInInventory(player: Player, materials: Set<Material>, ignore: ((ItemStack) -> Boolean)? = null): Int {
         var total = 0
         for (slot in 0 until player.inventory.size) {
             val stack = player.inventory.getItem(slot) ?: continue
-            if (stack.type != material) continue
+            if (stack.type !in materials) continue
             if (ignore != null && ignore(stack)) continue
             total += stack.amount
         }
@@ -99,11 +103,15 @@ abstract class RechargeUI(
     }
 
     protected fun removeFromInventory(player: Player, material: Material, amount: Int, ignore: ((ItemStack) -> Boolean)? = null): Int {
+        return removeFromInventory(player, setOf(material), amount, ignore)
+    }
+
+    protected fun removeFromInventory(player: Player, materials: Set<Material>, amount: Int, ignore: ((ItemStack) -> Boolean)? = null): Int {
         var remaining = amount
         for (slot in 0 until player.inventory.size) {
             if (remaining <= 0) break
             val stack = player.inventory.getItem(slot) ?: continue
-            if (stack.type != material) continue
+            if (stack.type !in materials) continue
             if (ignore != null && ignore(stack)) continue
             val toRemove = minOf(remaining, stack.amount)
             if (toRemove >= stack.amount) {
@@ -119,7 +127,11 @@ abstract class RechargeUI(
     }
 
     protected fun hasInInventory(player: Player, material: Material, amount: Int, ignore: ((ItemStack) -> Boolean)? = null): Boolean {
-        return countInInventory(player, material, ignore) >= amount
+        return countInInventory(player, setOf(material), ignore) >= amount
+    }
+
+    protected fun hasInInventory(player: Player, materials: Set<Material>, amount: Int, ignore: ((ItemStack) -> Boolean)? = null): Boolean {
+        return countInInventory(player, materials, ignore) >= amount
     }
 
     // --- Display helpers ---
