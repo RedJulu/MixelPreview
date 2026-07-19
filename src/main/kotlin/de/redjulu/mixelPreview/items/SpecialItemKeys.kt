@@ -17,6 +17,10 @@ object SpecialItemKeys {
         NamespacedKey(MixelPreview.instance, "special_block_id")
     }
 
+    private val blockHoloKey by lazy {
+        NamespacedKey(MixelPreview.instance, "special_block_holo")
+    }
+
     fun itemIdKey(): NamespacedKey = itemIdKey
 
     fun blockIdKey(): NamespacedKey = blockIdKey
@@ -59,9 +63,37 @@ object SpecialItemKeys {
             state.update(true, false)
             return
         }
-        block.chunk.persistentDataContainer.remove(blockLocationKey(block))
+        block.chunk.persistentDataContainer.remove(blockLocationKey(block, "b"))
     }
 
-    private fun blockLocationKey(block: Block): NamespacedKey =
-        NamespacedKey(MixelPreview.instance, "b_${block.x}_${block.y}_${block.z}")
+    fun saveBlockHolo(block: Block, text: String) {
+        val state = block.state
+        if (state is TileState) {
+            state.persistentDataContainer.set(blockHoloKey, PersistentDataType.STRING, text)
+            state.update(true, false)
+            return
+        }
+        block.chunk.persistentDataContainer.set(blockLocationKey(block, "holo"), PersistentDataType.STRING, text)
+    }
+
+    fun loadBlockHolo(block: Block): String? {
+        val state = block.state
+        if (state is TileState) {
+            return state.persistentDataContainer.get(blockHoloKey, PersistentDataType.STRING)
+        }
+        return block.chunk.persistentDataContainer.get(blockLocationKey(block, "holo"), PersistentDataType.STRING)
+    }
+
+    fun clearBlockHolo(block: Block) {
+        val state = block.state
+        if (state is TileState) {
+            state.persistentDataContainer.remove(blockHoloKey)
+            state.update(true, false)
+            return
+        }
+        block.chunk.persistentDataContainer.remove(blockLocationKey(block, "holo"))
+    }
+
+    private fun blockLocationKey(block: Block, prefix: String = "b"): NamespacedKey =
+        NamespacedKey(MixelPreview.instance, "${prefix}_${block.x}_${block.y}_${block.z}")
 }

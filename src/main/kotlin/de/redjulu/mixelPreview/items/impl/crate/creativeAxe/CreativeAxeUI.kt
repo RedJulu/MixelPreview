@@ -172,7 +172,7 @@ class CreativeAxeUI(
         }
     }
 
-    override fun onClose(player: Player) {
+    override fun onGuiClose(player: Player) {
         val slotItem = inventory.getItem(4)
         if (slotItem != null && !slotItem.type.isAir && !BaseGUI.isPlaceholderItem(slotItem)) {
             val leftover = player.inventory.addItem(slotItem.clone())

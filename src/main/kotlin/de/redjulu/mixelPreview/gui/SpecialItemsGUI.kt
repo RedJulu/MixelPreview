@@ -13,6 +13,7 @@ import de.redjulu.mixelPreview.utils.ItemBuilder
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.Sound
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
@@ -208,7 +209,7 @@ class SpecialItemsGUI : BaseGUI<SpecialItem, SpecialItemCategory, Unit>(
         groupAnimationTasks.remove(player.uniqueId)?.let { Bukkit.getScheduler().cancelTask(it) }
     }
 
-    override fun onClose(player: Player) {
+    override fun onGuiClose(player: Player) {
         stopGroupAnimation(player)
     }
 
@@ -297,6 +298,10 @@ class SpecialItemsGUI : BaseGUI<SpecialItem, SpecialItemCategory, Unit>(
         .build()
 
     private fun giveItem(player: Player, item: SpecialItem) {
+        if (!player.isOp) {
+            player.playSound(player.location, Sound.ENTITY_VILLAGER_NO, 1f, 1f)
+            return
+        }
         val stack = item.build()
         player.inventory.addItem(stack).values.forEach { leftover ->
             player.world.dropItemNaturally(player.location, leftover)

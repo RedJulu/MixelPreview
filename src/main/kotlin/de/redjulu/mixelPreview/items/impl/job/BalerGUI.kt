@@ -1,11 +1,15 @@
 package de.redjulu.mixelPreview.items.impl.job
 
 import de.redjulu.mixelPreview.MixelPreview
+import de.redjulu.mixelPreview.items.SpecialBlockHolo
+import de.redjulu.mixelPreview.items.SpecialBlockLock
+import de.redjulu.mixelPreview.items.SpecialItemRegistry
 import de.redjulu.mixelPreview.utils.GUIStage
 import de.redjulu.mixelPreview.utils.ItemBuilder
 import de.redjulu.mixelPreview.utils.SimpleGUI
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.entity.Player
@@ -13,7 +17,7 @@ import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitTask
 
-class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
+class BalerGUI(private val blockLocation: Location) : SimpleGUI<Unit, BalerGUI.BalerStages>(
     6,
     MiniMessage.miniMessage().deserialize("<gradient:#D0B726:#CB691A>Ballenpresse</gradient> <dark_gray>| "),
     0, 1, 0, 0,
@@ -41,7 +45,7 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
             }
 
             else -> {
-                renderResult(player)
+                renderHay(player)
             }
         }
     }
@@ -50,7 +54,6 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
         setTitle(mm.deserialize("<gradient:#D0B726:#CB691A>Ballenpresse</gradient> <dark_gray>| ${currentStage?.displayName}"), player)
         contentSlots.forEach {
             setInteractable(it) { item -> item.type == Material.WHEAT }
-
         }
 
         fillSlots(ItemBuilder.placeholder(Material.BLACK_STAINED_GLASS_PANE).build(), 45..53, 49)
@@ -68,28 +71,67 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
             .hideAdditionalInfo()
             .build()
         ) { p, _ ->
+            if (p.hasCooldown(Material.PLAYER_HEAD)) return@setButton
             val count = getInteractableItemCount()
             if (count < 9) {
                 p.playSound(p.location, Sound.ENTITY_VILLAGER_NO, 1f, 1f)
+                p.setCooldown(Material.PLAYER_HEAD, 15)
                 return@setButton
             }
             wheatAmount = count
             isSwitching = true
             advanceStage(p)
         }
+
+        val block = blockLocation.block
+
+        setToggleButton(player, 45, { SpecialBlockHolo.isHoloVisible(block) },
+            ItemBuilder(Material.RED_DYE)
+            .setName(mm.deserialize("<aqua><i>Hologram ausschalten"))
+            .build(),
+            ItemBuilder(Material.LIME_DYE)
+                .setName(mm.deserialize("<aqua><i>Hologram einschalten"))
+                .build()
+        ) { p, _ ->
+            if (p.hasCooldown(Material.RED_DYE) || p.hasCooldown(Material.LIME_DYE)) return@setToggleButton
+
+            val currentlyVisible = SpecialBlockHolo.isHoloVisible(block)
+            SpecialBlockHolo.toggle(block, !currentlyVisible)
+            updateToggleButtons(player)
+
+            if (currentlyVisible) {
+                p.playSound(p.location, Sound.BLOCK_BEACON_DEACTIVATE, 1f, 1f)
+                p.setCooldown(Material.LIME_DYE, 15)
+            } else {
+                p.playSound(p.location, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1f)
+                p.setCooldown(Material.RED_DYE, 15)
+            }
+        }
+
+        setButton(53, ItemBuilder(Material.BARRIER)
+            .setName("<red>Block aufheben")
+            .build()
+        ) { p, _ ->
+            val block = blockLocation.block
+            Baler.removeBlock(block)
+            p.give(SpecialItemRegistry.get(Baler.id)!!.createItem())
+            p.closeInventory()
+            player.playSound(player.location, Sound.BLOCK_GRASS_PLACE, 1f, 1f)
+        }
+
+        addPlayerPaginationButtons(48, 50, 2, player)
+
     }
 
-    private var countdownTask: BukkitTask? = null
-    private var countdownTick = 0
 
     fun renderWait(player: Player) {
         setType(InventoryType.HOPPER, player)
         setTitle(mm.deserialize("<gradient:#D0B726:#CB691A>Ballenpresse</gradient> <dark_gray>| ${currentStage?.displayName}"), player)
-        isDialogOpen = true
+        setClosable(false)
 
-        val clockFrames = (5 downTo 1).map { seconds ->
+        setCountdownItem(2, player, 5, { timeLeft, _ ->
             ItemBuilder(Material.CLOCK)
-                .setName("<gold>$seconds Sekunden")
+                .setName("<gold>$timeLeft Sekunden")
                 .setMiniMessageLore(
                     "",
                     " <dark_gray><b>▸</b> <white>Die Ballenpresse arbeitet...",
@@ -97,42 +139,21 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
                 )
                 .hideAdditionalInfo()
                 .build()
+        }, { _, _ ->
+            player.playSound(player.location, Sound.ENTITY_MINECART_RIDING, 0.6f, 1f)
+        }) { p ->
+            setClosable(true)
+            advanceStage(p)
+            player.stopSound(Sound.ENTITY_MINECART_RIDING)
+            player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f)
         }
-        setAnimatedItem(2, clockFrames)
-
-        countdownTick = 0
-        countdownTask?.cancel()
-        countdownTask = Bukkit.getScheduler().runTaskTimer(MixelPreview.instance, Runnable {
-            countdownTick++
-            tickAnimations(countdownTick.toLong())
-            if (countdownTick >= 5) {
-                countdownTask?.cancel()
-                countdownTask = null
-                isDialogOpen = false
-                isSwitching = true
-                advanceStage(player)
-            }
-        }, 20L, 20L)
     }
 
-    override fun onClose(player: Player) {
-        if (isInternalClose()) return
-
-        if (isDialogOpen) {
-            Bukkit.getScheduler().runTask(MixelPreview.instance, Runnable {
-                if (isDialogOpen && player.isOnline) {
-                    reopenFor(player)
-                }
-            })
-            return
-        }
-
+    override fun onGuiClose(player: Player) {
         if (currentStage == BalerStages.RESULT) {
             giveResults(player)
         }
-
-        countdownTask?.cancel()
-        countdownTask = null
+        SpecialBlockLock.unlock(blockLocation.block)
     }
 
     fun renderResult(player: Player) {
@@ -146,7 +167,10 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
             .setName("<gradient:#D0B726:#CB691A>Heuballen</gradient> <dark_gray>x<gold>$hayCount")
             .hideAdditionalInfo()
             .build()
-        )
+        ) { p, _ ->
+            giveResults(player)
+            p.closeInventory()
+        }
 
         setButton(2, ItemBuilder.placeholder(Material.BLACK_STAINED_GLASS_PANE).build())
 
@@ -154,7 +178,10 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
             .setName("<gradient:#D0B726:#CB691A>Weizen</gradient> <dark_gray>x<gold>$wheatCount")
             .hideAdditionalInfo()
             .build()
-        )
+        ) { p, _ ->
+            giveResults(player)
+            p.closeInventory()
+        }
     }
 
     private fun giveResults(player: Player) {
@@ -182,4 +209,7 @@ class BalerGUI : SimpleGUI<Unit, BalerGUI.BalerStages>(
         WAIT("<blue><i>Konvertierung..."),
         RESULT("<green>Heu Ausgabe"),
     }
+
+    override var openSound: Sound? = Sound.BLOCK_SHULKER_BOX_OPEN
+
 }

@@ -36,7 +36,7 @@ object ItemBuilder {
     operator fun invoke(item: ItemStack): Builder = Builder(item)
 
     @JvmStatic
-    fun placeholder(material: Material): Builder = Builder(material).setName(Component.empty())
+    fun placeholder(material: Material): Builder = Builder(material).setName(Component.empty()).setHideTooltip(true)
 
     class Builder {
         private val itemStack: ItemStack

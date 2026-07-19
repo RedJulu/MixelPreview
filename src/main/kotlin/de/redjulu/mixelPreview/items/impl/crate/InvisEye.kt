@@ -26,6 +26,9 @@ object InvisEye : SpecialItem("invis_eye", SpecialItemCategory.CRATE) {
                 "    <white>du dich im Austausch gegen <green>XP-",
                 "    <green>Punkte <white>unsichtbar machen"
             )
+            .setMaxStackSize(1)
+            .setUnrenamable(true)
+            .setUnenchantable(true)
     ).build()
 
     override fun onInteract(event: PlayerInteractEvent) {

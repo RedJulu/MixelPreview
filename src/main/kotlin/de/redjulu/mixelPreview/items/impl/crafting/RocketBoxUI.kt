@@ -5,15 +5,15 @@ import de.redjulu.mixelPreview.utils.ItemBuilder
 import de.redjulu.mixelPreview.utils.RechargeUI
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
-import org.bukkit.Sound
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
-import org.bukkit.persistence.PersistentDataType
 
 class RocketBoxUI(hand: EquipmentSlot) : RechargeUI(
     MiniMessage.miniMessage().deserialize("<b><gradient:#E73232:#274FD4>Raketen Schachtel</gradient></b>"),
-    hand
+    hand,
+    1,
+    32
 ) {
     override fun buildDisplay(item: ItemStack): ItemStack = item
 
@@ -29,54 +29,24 @@ class RocketBoxUI(hand: EquipmentSlot) : RechargeUI(
         .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzU3NDcwMTBkODRhYTU2NDgzYjc1ZjYyNDNkOTRmMzRjNTM0NjAzNTg0YjJjYzY4YTQ1YmYzNjU4NDAxMDVmZCJ9fX0=")
         .build()
 
-    override fun buildRechargeButton(): ItemStack = ItemBuilder(Material.BREWING_STAND)
-        .setName("<yellow>Aufladen")
-        .setMiniMessageLore(
-            "",
-            " <dark_gray><b>▸</b> <yellow>Kaufe hier eine weitere Aufladung",
-            "",
-            " <dark_gray>▪ <gray>1 Aufladungen: '<yellow>1 Rakete<gray>' <dark_gray>» <aqua>Linksklick",
-            " <dark_gray>▪ <gray>32 Aufladungen: '<yellow>32 Rakete<gray>' <dark_gray>» <aqua>Rechtsklick"
-        )
-        .build()
+    override fun buildRechargeButton(): ItemStack = buildRechargeBtn(
+        Material.BREWING_STAND,
+        "<yellow>Aufladen",
+        "Rakete"
+    )
 
     override fun onRecharge(player: Player, amount: Int): Boolean {
-        val inv = player.inventory
+        val item = getItem(player) ?: return false
+        val currentCharges = getCharges(item, RocketBox.rocketsKey)
 
-        val currentCharges = getItem(player)
-            ?.persistentDataContainer
-            ?.get(RocketBox.rocketsKey, PersistentDataType.INTEGER) ?: return false
-
-        var rockets = 0
-        for (i in 0 until inv.size) {
-            val stack = inv.getItem(i) ?: continue
-            if (stack.type != Material.FIREWORK_ROCKET) continue
-            if (SpecialItemKeys.isSpecialItem(stack, RocketBox.id)) continue
-            rockets += stack.amount
-        }
-
-        if (rockets < amount) {
+        if (!hasInInventory(player, Material.FIREWORK_ROCKET, amount) { !SpecialItemKeys.isSpecialItem(it, RocketBox.id) }) {
             player.sendActionBar(mm.deserialize("<red>Du hast nicht genug Raketen!"))
-            player.playSound(player.location, Sound.ENTITY_VILLAGER_NO, 1f, 1f)
+            noFunds(player)
             return false
         }
 
-        removeItem(player)
-
-        var remaining = amount
-        for (i in 0 until inv.size) {
-            if (remaining <= 0) break
-            val stack = inv.getItem(i) ?: continue
-            if (stack.type != Material.FIREWORK_ROCKET) continue
-            if (SpecialItemKeys.isSpecialItem(stack, RocketBox.id)) continue
-            val toRemove = minOf(remaining, stack.amount)
-            if (toRemove >= stack.amount) {
-                inv.setItem(i, null)
-            } else {
-                stack.amount -= toRemove
-            }
-            remaining -= toRemove
-        }
+        val removed = removeFromInventory(player, Material.FIREWORK_ROCKET, amount) { !SpecialItemKeys.isSpecialItem(it, RocketBox.id) }
+        if (removed < amount) return false
 
         val updated = RocketBox.update(RocketBox.createItem(), currentCharges + amount)
         setItem(player, updated)

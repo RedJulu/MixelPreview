@@ -157,8 +157,7 @@ class DialogBuilder(private var title: Component = Component.empty()) {
         if (audience is Player) {
             val holder = audience.openInventory.topInventory.holder
             if (holder is BaseGUI<*, *, *>) {
-                holder.isDialogOpen = true
-                audience.closeInventory()
+                holder.closeForExternalUI(audience)
             }
         }
         audience.showDialog(build())

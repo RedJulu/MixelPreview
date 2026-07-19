@@ -104,6 +104,5 @@ object RocketBox : SpecialItem("rocket_box", SpecialItemCategory.CRAFTING) {
         player.setCooldown(Material.FIREWORK_ROCKET, 10)
         player.fireworkBoost(ItemBuilder(Material.FIREWORK_ROCKET).setFireworkStrength(3).build())
         val updated = update(item, charges - 1)
-        if (isOffHand) player.inventory.setItemInOffHand(updated) else player.setItemInHand(updated)
     }
 }

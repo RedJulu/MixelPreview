@@ -1,6 +1,7 @@
 package de.redjulu.mixelPreview.utils
 
 import de.redjulu.mixelPreview.MixelPreview
+import de.redjulu.mixelPreview.items.SpecialBlockLock
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -34,7 +35,17 @@ class GUIListener : Listener {
         val invSize = event.inventory.size
 
         if (slot in 0 until invSize) {
-            if (gui.isInteractableSlot(slot)) return
+            if (gui.isInteractableSlot(slot)) {
+                val cursor = event.view.cursor
+                if (cursor.type != Material.AIR) {
+                    val predicate = gui.getInteractablePredicate(slot)
+                    if (predicate != null && !predicate(cursor)) {
+                        event.isCancelled = true
+                        return
+                    }
+                }
+                return
+            }
 
             if (gui.isPlaceholderSlot(slot)) {
                 event.isCancelled = true
@@ -140,14 +151,16 @@ class GUIListener : Listener {
 
         if (event.inventory.type == InventoryType.ANVIL) return
 
+        val wasClosable = gui.isClosable()
+
         gui.onClose(player)
 
-        if (gui.isDialogOpen) {
-            gui.reopenFor(player)
+        if (!wasClosable) {
             return
         }
 
         if (!gui.isSwitching) {
+            SpecialBlockLock.unlockPlayer(event.player.uniqueId)
             for (i in 0 until event.inventory.size) {
                 if (gui.isPlaceholderSlot(i) || gui.isInteractableSlot(i)) {
                     val item = event.inventory.getItem(i)

@@ -14,6 +14,7 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.bukkit.scheduler.BukkitTask
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Predicate
@@ -82,10 +83,12 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
     protected val placeholderItems = mutableMapOf<Int, ItemStack>()
     protected val placeholderPredicates = mutableMapOf<Int, (ItemStack) -> Boolean>()
     private val dynamicButtons = mutableListOf<DynamicButtonInfo>()
+    private val toggleButtons = mutableListOf<DynamicButtonInfo>()
+    private val pageItems = mutableMapOf<Int, MutableMap<Int, ItemStack>>()
 
-    protected var openSound: Sound? = Sound.BLOCK_CHEST_OPEN
-    protected var clickSound: Sound? = Sound.UI_BUTTON_CLICK
-    protected var backSound: Sound? = Sound.ITEM_ARMOR_EQUIP_GENERIC
+    protected open var openSound: Sound? = Sound.BLOCK_CHEST_OPEN
+    protected open var clickSound: Sound? = Sound.UI_BUTTON_CLICK
+    protected open var backSound: Sound? = Sound.ITEM_ARMOR_EQUIP_GENERIC
 
     protected var allItems = mutableListOf<T>()
     protected var currentCategory: C? = defaultCategory
@@ -94,8 +97,9 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         private set
 
     var isSwitching: Boolean = false
-    var isDialogOpen: Boolean = false
     private var internalClose = false
+    private var closable = true
+    private val countdownTasks = mutableMapOf<Int, BukkitTask>()
 
     protected var stages: List<S> = emptyList()
     protected var stageIndex: Int = 0
@@ -198,7 +202,7 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
 
     fun open(player: Player, saveToHistory: Boolean) {
         isSwitching = false
-        isDialogOpen = false
+        closable = true
         if (saveToHistory) {
             val holder = player.openInventory.topInventory.holder
             if (holder is BaseGUI<*, *, *>) {
@@ -213,7 +217,7 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
     }
 
     fun update(player: Player) {
-        if (isDialogOpen) return
+        cancelCountdowns()
 
         inv.clear()
         GUIListener.clearButtons(inv)
@@ -226,13 +230,14 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         placeholderPredicates.clear()
         ignoredSlots.clear()
         dynamicButtons.clear()
+        toggleButtons.clear()
 
         compose(player)
         tickAnimations(0)
     }
 
     fun updateExceptPlaceholders(player: Player) {
-        if (isDialogOpen) return
+        cancelCountdowns()
 
         val savedItems = placeholderSlots
             .filter { slot ->
@@ -252,6 +257,7 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         placeholderPredicates.clear()
         ignoredSlots.clear()
         dynamicButtons.clear()
+        toggleButtons.clear()
 
         compose(player)
         tickAnimations(0)
@@ -261,6 +267,12 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
 
     fun updateDynamicButtons(player: Player) {
         for (info in dynamicButtons) {
+            inv.setItem(info.slot, if (info.condition.test(player)) info.activeItem else info.inactiveItem)
+        }
+    }
+
+    fun updateToggleButtons(player: Player) {
+        for (info in toggleButtons) {
             inv.setItem(info.slot, if (info.condition.test(player)) info.activeItem else info.inactiveItem)
         }
     }
@@ -370,6 +382,23 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         }
     }
 
+    protected fun setToggleButton(
+        player: Player,
+        slot: Int,
+        condition: Predicate<Player>,
+        activeItem: ItemStack,
+        inactiveItem: ItemStack,
+        action: BiConsumer<Player, ClickType>
+    ) {
+        toggleButtons.add(DynamicButtonInfo(slot, condition, activeItem, inactiveItem))
+        GUIListener.registerButton(inv, slot) { p, click ->
+            clickSound?.let { p.playSound(p.location, it, 0.5f, 1.0f) }
+            action.accept(p, click)
+            inv.setItem(slot, if (condition.test(p)) activeItem else inactiveItem)
+        }
+        inv.setItem(slot, if (condition.test(player)) activeItem else inactiveItem)
+    }
+
     protected fun setConditionalButton(
         player: Player,
         slot: Int,
@@ -458,9 +487,13 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
     }
 
     protected fun addPaginationButtons(prev: Int, next: Int, p: Player, f: Predicate<T>) {
+        addPaginationButtons(prev, next, p, f, -1)
+    }
+
+    protected fun addPaginationButtons(prev: Int, next: Int, p: Player, f: Predicate<T>, maxPages: Int) {
         val filtered = allItems.filter { f.test(it) }
         val hasPrev = page > 0
-        val hasNext = (page + 1) * pageSize < filtered.size
+        val hasNext = if (maxPages > 0) page < maxPages - 1 else (page + 1) * pageSize < filtered.size
 
         val prevItem = ItemStack(Material.ARROW).apply {
             itemMeta = itemMeta?.apply {
@@ -489,15 +522,81 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         }
     }
 
+    protected fun addPlayerPaginationButtons(prev: Int, next: Int, maxPages: Int, player: Player) {
+        val hasPrev = page > 0
+        val hasNext = page < maxPages - 1
+
+        val prevItem = ItemStack(Material.ARROW).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(MiniMessage.miniMessage().deserialize(
+                    if (hasPrev) "<gray>« Vorherige Seite" else "<dark_gray>« Vorherige Seite"
+                ))
+            }
+        }
+        setButton(prev, prevItem) { pl, _ ->
+            if (hasPrev) {
+                savePageItems(page)
+                page--
+                update(pl)
+                restorePageItems(page)
+            }
+        }
+
+        val nextItem = ItemStack(Material.ARROW).apply {
+            itemMeta = itemMeta?.apply {
+                displayName(MiniMessage.miniMessage().deserialize(
+                    if (hasNext) "<gray>Nächste Seite »" else "<dark_gray>Nächste Seite »"
+                ))
+            }
+        }
+        setButton(next, nextItem) { pl, _ ->
+            if (hasNext) {
+                savePageItems(page)
+                page++
+                update(pl)
+                restorePageItems(page)
+            }
+        }
+    }
+
+    private fun savePageItems(pageNum: Int) {
+        val saved = mutableMapOf<Int, ItemStack>()
+        for (slot in contentSlots) {
+            val item = inv.getItem(slot)
+            if (item != null && item.type != Material.AIR) {
+                saved[slot] = item.clone()
+            }
+        }
+        if (saved.isNotEmpty()) {
+            pageItems[pageNum] = saved
+        } else {
+            pageItems.remove(pageNum)
+        }
+    }
+
+    private fun restorePageItems(pageNum: Int) {
+        val saved = pageItems[pageNum] ?: return
+        for ((slot, item) in saved) {
+            inv.setItem(slot, item.clone())
+        }
+    }
+
     protected fun setAnimatedItem(slot: Int, frames: List<ItemStack>) {
         animatedSlots[slot] = frames
     }
 
     fun getInteractableItemCount(): Int {
-        return interactableSlots.sumOf { slot ->
-            val item = inv.getItem(slot)
-            if (item != null && item.type != Material.AIR) item.amount else 0
+        var total = 0
+        for ((_, items) in pageItems) {
+            for ((_, item) in items) {
+                if (item.type != Material.AIR) total += item.amount
+            }
         }
+        for (slot in contentSlots) {
+            val item = inv.getItem(slot)
+            if (item != null && item.type != Material.AIR) total += item.amount
+        }
+        return total
     }
 
     fun isInteractableSlotEmpty(slot: Int): Boolean {
@@ -511,7 +610,59 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
 
     override fun getInventory(): Inventory = inv
 
-    open fun onClose(player: Player) {}
+    fun onClose(player: Player) {
+        if (internalClose) return
+
+        if (!closable) {
+            Bukkit.getScheduler().runTask(MixelPreview.instance, Runnable {
+                if (!closable && player.isOnline) {
+                    reopenFor(player)
+                }
+            })
+            return
+        }
+
+        cancelCountdowns()
+        onGuiClose(player)
+    }
+
+    open fun onGuiClose(player: Player) {}
+
+    fun setClosable(value: Boolean) {
+        closable = value
+    }
+
+    fun isClosable(): Boolean = closable
+
+    protected fun setCountdownItem(
+        slot: Int,
+        player: Player,
+        seconds: Int,
+        itemProvider: (timeLeft: Int, total: Int) -> ItemStack,
+        onTick: ((timeLeft: Int, total: Int) -> Unit)? = null,
+        onFinish: (Player) -> Unit
+    ) {
+        countdownTasks.remove(slot)?.cancel()
+        var timeLeft = seconds
+        inv.setItem(slot, itemProvider(timeLeft, seconds))
+        onTick?.invoke(timeLeft, seconds)
+
+        countdownTasks[slot] = Bukkit.getScheduler().runTaskTimer(MixelPreview.instance, Runnable {
+            timeLeft--
+            if (timeLeft <= 0) {
+                countdownTasks.remove(slot)?.cancel()
+                onFinish(player)
+            } else {
+                inv.setItem(slot, itemProvider(timeLeft, seconds))
+                onTick?.invoke(timeLeft, seconds)
+            }
+        }, 20L, 20L)
+    }
+
+    private fun cancelCountdowns() {
+        countdownTasks.values.forEach { it.cancel() }
+        countdownTasks.clear()
+    }
 
     @Volatile
     private var reopening = false
@@ -527,6 +678,12 @@ abstract class BaseGUI<T, C : Enum<C>, S>(
         } finally {
             reopening = false
         }
+    }
+
+    fun closeForExternalUI(player: Player) {
+        internalClose = true
+        player.closeInventory()
+        internalClose = false
     }
 
     fun isInternalClose(): Boolean = internalClose

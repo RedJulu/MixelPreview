@@ -1,6 +1,9 @@
 package de.redjulu.mixelPreview.items
 
 import de.redjulu.mixelPreview.utils.ItemBuilder
+import de.redjulu.mixelPreview.items.SpecialBlockHolo
+import org.bukkit.Material
+import org.bukkit.block.Block
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
@@ -34,12 +37,18 @@ abstract class SpecialItem(
 
     abstract fun createItem(): ItemStack
 
+    open val placedBlock: Material? = null
+    open val holoText: String? = null
+    open val lockable: Boolean = false
+
     open fun giveMessage(): String =
         " <dark_gray>» <green>Du hast <b>$displayName</b> <green>erhalten!"
 
     open fun onInteract(event: PlayerInteractEvent) {}
     open fun onInteractEntity(event: PlayerInteractEntityEvent) {}
+    open fun onBlockInteract(event: PlayerInteractEvent) {}
     open fun onPlace(event: BlockPlaceEvent) {}
+    open fun onPlaceBlock(event: PlayerInteractEvent, block: Block) {}
     open fun onBreak(event: BlockBreakEvent) {}
     open fun onBreakWith(event: BlockBreakEvent) {}
     open fun onItemBreak(event: PlayerItemBreakEvent) {}
@@ -83,6 +92,35 @@ abstract class SpecialItem(
     open fun onUnequipLeggings(player: Player) {}
     open fun onEquipBoots(player: Player) {}
     open fun onUnequipBoots(player: Player) {}
+
+    fun pickupBlock(player: Player, block: Block) {
+        SpecialBlockHolo.remove(block)
+        val item = createItem()
+        val leftover = player.inventory.addItem(item)
+        for (stack in leftover.values) {
+            player.world.dropItemNaturally(player.location, stack)
+        }
+        block.type = Material.AIR
+        SpecialItemKeys.untagBlock(block)
+    }
+
+    fun removeBlock(block: Block) {
+        SpecialBlockHolo.remove(block)
+        SpecialBlockLock.unlock(block)
+        block.type = Material.AIR
+        SpecialItemKeys.untagBlock(block)
+    }
+
+    fun lockBlock(block: Block, player: Player) {
+        SpecialBlockLock.lock(block, player.uniqueId)
+    }
+
+    fun unlockBlock(block: Block) {
+        SpecialBlockLock.unlock(block)
+    }
+
+    fun isLockedBlock(block: Block): Boolean =
+        SpecialBlockLock.isLocked(block)
 
 
     fun build(): ItemStack = createItem()

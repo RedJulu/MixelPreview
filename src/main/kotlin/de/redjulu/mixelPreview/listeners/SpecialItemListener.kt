@@ -1,13 +1,18 @@
 package de.redjulu.mixelPreview.listeners
 
+import de.redjulu.mixelPreview.items.SpecialBlockHolo
+import de.redjulu.mixelPreview.items.SpecialBlockLock
 import de.redjulu.mixelPreview.items.SpecialItem
 import de.redjulu.mixelPreview.items.SpecialItemKeys
 import de.redjulu.mixelPreview.items.SpecialItemRegistry
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
+import org.bukkit.Sound
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
@@ -15,6 +20,8 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.entity.EntityShootBowEvent
 import org.bukkit.event.entity.ProjectileLaunchEvent
+import org.bukkit.event.inventory.InventoryMoveItemEvent
+import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerFishEvent
 import org.bukkit.event.player.PlayerHarvestBlockEvent
@@ -30,6 +37,7 @@ import org.bukkit.event.player.PlayerShearEntityEvent
 import org.bukkit.event.player.PlayerSwapHandItemsEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
+import org.bukkit.block.Container
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
@@ -150,11 +158,53 @@ class SpecialItemListener : Listener {
         inWater.remove(id)
         lastArmor.remove(id)
         lastHands.remove(id)
+        SpecialBlockLock.cleanupOnQuit(id)
     }
 
     @EventHandler
     fun onInteract(event: PlayerInteractEvent) {
+        if (event.action == Action.RIGHT_CLICK_BLOCK) {
+            val item = event.item
+            val id = SpecialItemKeys.getItemId(item)
+            if (id != null) {
+                val special = SpecialItemRegistry.get(id)
+                if (special != null && special.placedBlock != null) {
+                    val clickedBlock = event.clickedBlock ?: return
+                    val placeBlock = clickedBlock.getRelative(event.blockFace)
+                    if (placeBlock.type.isAir) {
+                        event.isCancelled = true
+                        placeBlock.type = special.placedBlock!!
+                        SpecialItemKeys.tagBlock(placeBlock, id)
+                        special.holoText?.let { SpecialBlockHolo.spawn(placeBlock, it) }
+                        if (item != null) {
+                            if (item.amount > 1) item.amount -= 1
+                            else event.player.inventory.setItem(event.hand!!, null)
+                        }
+                        special.onPlaceBlock(event, placeBlock)
+                        return
+                    }
+                }
+            }
+        }
+
         dispatch(event.item) { it.onInteract(event) }
+
+        if (event.action == Action.RIGHT_CLICK_BLOCK) {
+            val block = event.clickedBlock ?: return
+            val blockId = SpecialItemKeys.getBlockId(block) ?: return
+            val special = SpecialItemRegistry.get(blockId) ?: return
+            if (special.lockable) {
+                val locker = SpecialBlockLock.getLocker(block)
+                if (locker != null && locker != event.player.uniqueId) {
+                    event.isCancelled = true
+                    event.player.playSound(event.player.location, Sound.ENTITY_VILLAGER_NO, 1f, 1f)
+                    event.player.sendActionBar(MiniMessage.miniMessage().deserialize("<red>Jemand anderes benutzt diesen Block bereits!"))
+                    return
+                }
+                SpecialBlockLock.lock(block, event.player.uniqueId)
+            }
+            special.onBlockInteract(event)
+        }
     }
 
     @EventHandler
@@ -170,6 +220,7 @@ class SpecialItemListener : Listener {
         val special = SpecialItemRegistry.get(id) ?: return
         SpecialItemKeys.tagBlock(event.block, id)
         special.onPlace(event)
+        special.holoText?.let { SpecialBlockHolo.spawn(event.block, it) }
     }
 
     @EventHandler
@@ -177,7 +228,10 @@ class SpecialItemListener : Listener {
         val blockId = SpecialItemKeys.getBlockId(event.block)
         if (blockId != null) {
             SpecialItemRegistry.get(blockId)?.onBreak(event)
-            SpecialItemKeys.untagBlock(event.block)
+            if (!event.isCancelled) {
+                SpecialBlockHolo.remove(event.block)
+                SpecialItemKeys.untagBlock(event.block)
+            }
         }
         val player = event.player
         dispatch(player.inventory.itemInMainHand) { it.onBreakWith(event) }
@@ -235,5 +289,29 @@ class SpecialItemListener : Listener {
     fun onKillEntity(event: EntityDeathEvent) {
         val killer = event.entity.killer ?: return
         dispatchHands(killer) { it.onKillEntity(event) }
+    }
+
+    @EventHandler
+    fun onHopperMove(event: InventoryMoveItemEvent) {
+        val holder = event.source.holder
+        if (holder is Container) {
+            val blockId = SpecialItemKeys.getBlockId(holder.block)
+            if (blockId != null) {
+                event.isCancelled = true
+                return
+            }
+        }
+        val destHolder = event.destination.holder
+        if (destHolder is Container) {
+            val blockId = SpecialItemKeys.getBlockId(destHolder.block)
+            if (blockId != null) {
+                event.isCancelled = true
+            }
+        }
+    }
+
+    @EventHandler
+    fun onChunkLoad(event: ChunkLoadEvent) {
+        SpecialBlockHolo.respawnAllForChunk(event.chunk)
     }
 }

@@ -18,7 +18,7 @@ internal class MixelPreviewBootstrap : PluginBootstrap {
                 Commands.literal("specialitems")
                     .requires { source ->
                         val executor = source.executor
-                        executor is Player && executor.isOp
+                        executor is Player
                     }
                     .executes { context ->
                         val player = context.source.executor as Player

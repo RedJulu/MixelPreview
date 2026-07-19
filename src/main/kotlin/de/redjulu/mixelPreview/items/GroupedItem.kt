@@ -12,7 +12,6 @@ data class GroupedItem(
     fun displayFrames(): List<ItemStack> = items.map { item ->
         ItemBuilder(item.createItem())
             .setName("<b>$name</b>")
-            .setMiniMessageLore("", " <gray>Klicke zum Anzeigen")
             .addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_DYE)
             .build()
     }
